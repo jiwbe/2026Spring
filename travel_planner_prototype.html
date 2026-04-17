@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoyageFlow - 여행 준비 워크스페이스</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121936;
+      --panel-2: #182146;
+      --line: rgba(255,255,255,0.08);
+      --text: #eef2ff;
+      --muted: #a8b3d9;
+      --accent: #7c9cff;
+      --accent-2: #9d7cff;
+      --good: #3ddc97;
+      --warn: #ffb84d;
+      --danger: #ff6b81;
+      --shadow: 0 18px 50px rgba(0,0,0,0.28);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124,156,255,.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(157,124,255,.16), transparent 24%),
+        linear-gradient(180deg, #0a1020 0%, #0c1328 100%);
+      color: var(--text);
+    }
+
+    a { color: inherit; }
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid var(--line);
+      background: rgba(9, 14, 30, 0.92);
+      backdrop-filter: blur(16px);
+      padding: 28px 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      margin-bottom: 22px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+
+    .brand h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--muted);
+      padding: 12px 14px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: .2s ease;
+      border: 1px solid transparent;
+    }
+
+    .nav a:hover, .nav a.active {
+      color: var(--text);
+      background: rgba(124,156,255,0.12);
+      border-color: rgba(124,156,255,0.22);
+    }
+
+    .sidebar-card {
+      margin-top: 24px;
+      background: linear-gradient(180deg, rgba(124,156,255,.14), rgba(157,124,255,.08));
+      border: 1px solid rgba(124,156,255,0.18);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .sidebar-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .sidebar-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .main {
+      padding: 28px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(18,25,54,0.96), rgba(17,24,49,0.92));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-main {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -90px;
+      top: -70px;
+      background: radial-gradient(circle, rgba(124,156,255,.28), transparent 70%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(124,156,255,0.12);
+      color: #d8e0ff;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.15;
+    }
+
+    .hero p {
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button, .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      box-shadow: 0 10px 25px rgba(124,156,255,0.28);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    button:hover, .btn:hover { transform: translateY(-1px); }
+
+    .hero-side {
+      padding: 22px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      padding: 16px;
+      border-radius: 16px;
+    }
+
+    .stat .value { font-size: 24px; font-weight: 800; }
+    .stat .label { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .grid-2 { grid-template-columns: 1.1fr 0.9fr; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+    section.card { padding: 22px; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-size: 13px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 13px;
+      color: #d5ddff;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--text);
+      padding: 12px 14px;
+      font: inherit;
+      outline: none;
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: #93a0cf;
+    }
+
+    textarea { min-height: 92px; resize: vertical; }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .item {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .item h4 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      font-size: 12px;
+      color: #dce4ff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(124,156,255,.14);
+      border: 1px solid rgba(124,156,255,0.22);
+    }
+
+    .tag.warn { background: rgba(255,184,77,.12); border-color: rgba(255,184,77,.24); }
+    .tag.good { background: rgba(61,220,151,.12); border-color: rgba(61,220,151,.24); }
+    .tag.danger { background: rgba(255,107,129,.12); border-color: rgba(255,107,129,.24); }
+
+    .route {
+      position: relative;
+      padding-left: 28px;
+    }
+
+    .route::before {
+      content: "";
+      position: absolute;
+      left: 9px;
+      top: 12px;
+      bottom: 12px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(124,156,255,.9), rgba(157,124,255,.25));
+    }
+
+    .route-stop {
+      position: relative;
+      padding: 12px 0 12px 14px;
+    }
+
+    .route-stop::before {
+      content: "";
+      position: absolute;
+      left: -25px;
+      top: 20px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 5px rgba(124,156,255,.12);
+    }
+
+    .route-time {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .checklist-group {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,.03);
+      margin-bottom: 12px;
+    }
+
+    .checklist-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px dashed rgba(255,255,255,.07);
+    }
+
+    .checklist-row:last-child { border-bottom: 0; }
+
+    .checklist-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 4px;
+      accent-color: var(--accent);
+    }
+
+    .money-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .budget-bar {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .budget-fill {
+      height: 100%;
+      width: 68%;
+      background: linear-gradient(90deg, var(--good), #7be0ff);
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .tab.active {
+      background: rgba(124,156,255,.16);
+      border-color: rgba(124,156,255,.3);
+    }
+
+    .phrase-box {
+      display: none;
+      gap: 10px;
+    }
+
+    .phrase-box.active {
+      display: grid;
+    }
+
+    .phrase {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .phrase .kr { font-weight: 700; margin-bottom: 8px; }
+    .phrase .local { color: #d8e1ff; }
+    .phrase .roman { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .shot-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(124,156,255,.13), rgba(255,255,255,.03));
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .shot-thumb {
+      aspect-ratio: 4 / 5;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.38)),
+        linear-gradient(135deg, rgba(124,156,255,.65), rgba(157,124,255,.62));
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .shot-body { padding: 12px; }
+
+    .reservation-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .reservation-table th,
+    .reservation-table td {
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      padding: 12px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .reservation-table th { color: #d9e2ff; font-size: 13px; }
+    .reservation-table td { color: var(--muted); }
+
+    .inline-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 1180px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .hero, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .money-grid { grid-template-columns: repeat(2, 1fr); }
+      .media-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .main { padding: 16px; }
+      .sidebar { padding: 16px; }
+      .hero-main, .hero-side, section.card { padding: 18px; }
+      .form-grid, .stats, .money-grid, .media-grid { grid-template-columns: 1fr; }
+      .hero h2 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">V</div>
+        <div>
+          <h1>VoyageFlow</h1>
+          <p>여행 준비를 한곳에서</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="active" href="#overview">여행 개요 <span>01</span></a>
+        <a href="#itinerary">일정 & 루트 <span>02</span></a>
+        <a href="#recommendations">추천 장소 <span>03</span></a>
+        <a href="#reservations">예약 가이드 <span>04</span></a>
+        <a href="#checklist">체크리스트 <span>05</span></a>
+        <a href="#budget">예산 & 지출 <span>06</span></a>
+        <a href="#phrases">필수 회화 <span>07</span></a>
+        <a href="#content">촬영 아이디어 <span>08</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>프로토타입 포인트</h3>
+        <p>
+          사용자가 모든 정보를 강제로 입력하지 않아도 시작할 수 있게 설계했어.
+          선택 입력, 템플릿 불러오기, 일정 기반 추천 흐름을 중심으로 잡았어.
+        </p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <div class="card hero-main">
+          <div class="eyebrow">✈️ 저장한 장소를 가져오고, 루트를 만들고, 준비까지 끝내는 여행 워크스페이스</div>
+          <h2>한 화면에서 여행 준비를 끝내는<br />웹 기반 트래블 플래너</h2>
+          <p>
+            구글맵 저장 장소 import, 최적 동선 정리, SNS 기반 핫플 추천, 예약 정보 정리,
+            체크리스트, 예산 관리, 나라별 실전 회화까지 하나의 흐름으로 묶은 서비스 컨셉이야.
+          </p>
+          <div class="hero-actions">
+            <button class="btn-primary" onclick="scrollToSection('overview')">여행 만들기</button>
+            <button class="btn-secondary" onclick="scrollToSection('itinerary')">루트 보기</button>
+          </div>
+          <div class="pill-row">
+            <div class="pill">Google Takeout 업로드</div>
+            <div class="pill">선택 입력 중심</div>
+            <div class="pill">일정 기반 회화 추천</div>
+            <div class="pill">SNS 레퍼런스 큐레이션</div>
+          </div>
+        </div>
+
+        <div class="card hero-side">
+          <div class="stats">
+            <div class="stat">
+              <div class="value">7일</div>
+              <div class="label">여행 기간</div>
+            </div>
+            <div class="stat">
+              <div class="value">18곳</div>
+              <div class="label">저장된 장소</div>
+            </div>
+            <div class="stat">
+              <div class="value">₩2.3M</div>
+              <div class="label">설정 예산</div>
+            </div>
+            <div class="stat">
+              <div class="value">24개</div>
+              <div class="label">준비 체크 항목</div>
+            </div>
+          </div>
+          <div class="item">
+            <div class="item-head">
+              <div>
+                <h4>이번 여행의 핵심 목표</h4>
+                <div class="subtle">여행 목적 기반으로 추천과 체크리스트가 달라짐</div>
+              </div>
+              <span class="tag good">활성</span>
+            </div>
+            <div class="meta">
+              <span class="tag">사진 스팟</span>
+              <span class="tag">현지 맛집</span>
+              <span class="tag">느긋한 일정</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="overview">
+          <div class="section-head">
+            <div>
+              <h3>여행 정보</h3>
+              <p>모든 항목은 선택 입력 가능. 최소 정보만으로도 바로 시작할 수 있어.</p>
+            </div>
+            <button class="btn-secondary">초안 저장</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>여행 이름</label>
+              <input type="text" value="도쿄 사진 & 맛집 여행" />
+            </div>
+            <div class="field">
+              <label>나라</label>
+              <input type="text" value="일본" />
+            </div>
+            <div class="field">
+              <label>지역 / 도시</label>
+              <input type="text" value="도쿄" />
+            </div>
+            <div class="field">
+              <label>같이 가는 사람</label>
+              <input type="text" placeholder="예: 친구 1명 / 연인 / 가족" value="친구 1명" />
+            </div>
+            <div class="field">
+              <label>출발일</label>
+              <input type="date" value="2026-05-14" />
+            </div>
+            <div class="field">
+              <label>도착일</label>
+              <input type="date" value="2026-05-20" />
+            </div>
+            <div class="field">
+              <label>숙소</label>
+              <input type="text" value="Shibuya Stream Hotel" />
+            </div>
+            <div class="field">
+              <label>여행 스타일</label>
+              <select>
+                <option>느긋하게</option>
+                <option>적당히</option>
+                <option>빡빡하게</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>여행 목적</label>
+              <select>
+                <option>맛집 + 사진</option>
+                <option>휴양</option>
+                <option>쇼핑</option>
+                <option>가족여행</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>하루 예산 감각</label>
+              <select>
+                <option>보통</option>
+                <option>아끼기</option>
+                <option>플렉스</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label>메모</label>
+              <textarea placeholder="꼭 가고 싶은 곳, 촬영 컨셉, 쇼핑 리스트 등">야경 포토스팟과 감성 카페 위주. 브런치 맛집도 중요. 비 오는 날 대체 플랜 있으면 좋음.</textarea>
+            </div>
+          </div>
+
+          <div class="inline-actions">
+            <button class="btn-primary">구글맵 저장 장소 가져오기</button>
+            <button class="btn-secondary">링크/주소 붙여넣기</button>
+            <button class="btn-secondary">나중에 입력하기</button>
+          </div>
+          <div class="footer-note">
+            * 실제 서비스에서는 Google Takeout 업로드 기반 import, 수동 장소 추가, 공유 링크 붙여넣기 같은 반자동 수집 흐름을 붙일 수 있음.
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <h3>여행 요약 카드</h3>
+              <p>입력한 정보가 추천과 루트에 어떻게 반영되는지 보여주는 영역</p>
+            </div>
+          </div>
+          <div class="list">
+            <div class="item">
+              <h4>기본 설정</h4>
+              <div class="meta">
+                <span class="tag">일본 / 도쿄</span>
+                <span class="tag">6박 7일</span>
+                <span class="tag">친구 1명</span>
+                <span class="tag">느긋한 일정</span>
+              </div>
+            </div>
+            <div class="item">
+              <h4>추천에 반영되는 요소</h4>
+              <div class="meta">
+                <span class="tag good">맛집 중심</span>
+                <span class="tag good">사진 스팟 강화</span>
+                <span class="tag">야간 루트 우선</span>
+                <span class="tag warn">비 오는 날 대체 필요</span>
+              </div>
+            </div>
+            <div class="item">
+              <h4>준비 상태</h4>
+              <div class="meta">
+                <span class="tag">숙소 입력 완료</span>
+                <span class="tag">예산 설정 완료</span>
+                <span class="tag danger">여권 만료일 확인 필요</span>
+                <span class="tag warn">레스토랑 2곳 예약 필요</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card" id="itinerary">
+          <div class="section-head">
+            <div>
+              <h3>일정 & 최적 루트</h3>
+              <p>가까운 거리 순, 체류 시간, 시간대 선호를 바탕으로 일정을 재배치하는 화면</p>
+            </div>
+            <button class="btn-primary">자동 루트 재정렬</button>
+          </div>
+
+          <div class="pill-row" style="margin-bottom:14px;">
+            <span class="pill">5월 15일 · 시부야 권역</span>
+            <span class="pill">도보 + 지하철</span>
+            <span class="pill">비 예보 없음</span>
+          </div>
+
+          <div class="route">
+            <div class="route-stop">
+              <div class="route-time">09:00 - 10:00</div>
+              <h4>Shibuya Sky</h4>
+              <div class="subtle">아침 시간대 혼잡도 낮음 · 사진 스팟 우선</div>
+            </div>
+            <div class="route-stop">
+              <div class="route-time">10:15 - 11:15</div>
+              <h4>Lo-Fi 브런치 카페</h4>
+              <div class="subtle">도보 8분 · SNS 언급량 상승 중</div>
+            </div>
+            <div class="route-stop">
+              <div class="route-time">11:40 - 13:00</div>
+              <h4>빈티지 편집숍 거리</h4>
+              <div class="subtle">쇼핑 + 스냅 촬영 추천 구간</div>
+            </div>
+            <div class="route-stop">
+              <div class="route-time">13:20 - 14:40</div>
+              <h4>오마카세 런치 후보</h4>
+              <div class="subtle">예약 필요 · 숙소 복귀 동선과 연결됨</div>
+            </div>
+            <div class="route-stop">
+              <div class="route-time">17:30 - 20:00</div>
+              <h4>야경 포토 루트</h4>
+              <div class="subtle">해질녘 기준 자동 배치 · 릴스 레퍼런스 있음</div>
+            </div>
+          </div>
+
+          <div class="inline-actions">
+            <button class="btn-secondary">비 오는 날 대체 플랜</button>
+            <button class="btn-secondary">근처 장소 추가</button>
+            <button class="btn-secondary">체력 고려 모드</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <h3>저장한 장소</h3>
+              <p>직접 입력, 추천 추가, 구글맵 import 항목을 한 목록에서 관리</p>
+            </div>
+            <button class="btn-secondary">장소 추가</button>
+          </div>
+          <div class="list">
+            <div class="item">
+              <div class="item-head">
+                <div>
+                  <h4>Shibuya Sky</h4>
+                  <div class="subtle">관광지 · import from Google Maps</div>
+                </div>
+                <span class="tag good">확정</span>
+              </div>
+              <div class="meta">
+                <span class="tag">오전 추천</span>
+                <span class="tag">체류 60분</span>
+                <span class="tag">포토스팟</span>
+              </div>
+            </div>
+            <div class="item">
+              <div class="item-head">
+                <div>
+                  <h4>Lo-Fi 브런치 카페</h4>
+                  <div class="subtle">카페 · SNS 추천으로 추가</div>
+                </div>
+                <span class="tag warn">후보</span>
+              </div>
+              <div class="meta">
+                <span class="tag">브런치</span>
+                <span class="tag">도보 이동권</span>
+                <span class="tag">릴스 다수</span>
+              </div>
+            </div>
+            <div class="item">
+              <div class="item-head">
+                <div>
+                  <h4>오마카세 런치 후보</h4>
+                  <div class="subtle">식당 · 예약 필요</div>
+                </div>
+                <span class="tag danger">예약 필요</span>
+              </div>
+              <div class="meta">
+                <span class="tag">점심 추천</span>
+                <span class="tag">예산 높음</span>
+                <span class="tag">후기 요약 있음</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card" id="recommendations">
+          <div class="section-head">
+            <div>
+              <h3>근처 핫플 & 맛집 추천</h3>
+              <p>인스타그램/X 언급과 저장 장소 주변 맥락을 기반으로 일정에 추가하기 쉬운 추천 영역</p>
+            </div>
+            <button class="btn-secondary">추천 새로고침</button>
+          </div>
+          <div class="list">
+            <div class="item">
+              <div class="item-head">
+                <div>
+                  <h4>Matcha Atelier</h4>
+                  <div class="subtle">시부야 Sky에서 도보 6분 · 디저트 카페</div>
+                </div>
+                <span class="tag good">트렌드 상승</span>
+              </div>
+              <p class="subtle">최근 숏폼에서 녹차 티라미수와 창가 좌석 구도가 많이 언급됨.</p>
+              <div class="meta">
+                <span class="tag">Instagram 언급량 +18%</span>
+                <span class="tag">X 반응 높음</span>
+                <span class="tag">사진 적합</span>
+              </div>
+              <div class="inline-actions">
+                <button class="btn-primary">일정에 추가</button>
+                <button class="btn-secondary">레퍼런스 보기</button>
+              </div>
+            </div>
+            <div class="item">
+              <div class="item-head">
+                <div>
+                  <h4>Late Night Vinyl Bar</h4>
+                  <div class="subtle">야간 루트와 연결 가능한 바</div>
+                </div>
+                <span class="tag warn">혼잡 가능</span>
+              </div>
+              <p class="subtle">감성 조명, LP 바, 커플/친구 스냅 레퍼런스로 자주 등장하는 장소.</p>
+              <div class="meta">
+                <span class="tag">야경 루트</span>
+                <span class="tag">예약 권장</span>
+                <span class="tag">릴스 레퍼런스 多</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="reservations">
+          <div class="section-head">
+            <div>
+              <h3>예약 가이드</h3>
+              <p>예약 가능한 장소, 예약 방법, 마감 시점, 확인 상태를 한 탭에서 관리</p>
+            </div>
+          </div>
+          <table class="reservation-table">
+            <thead>
+              <tr>
+                <th>장소</th>
+                <th>예약 필요</th>
+                <th>방법</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Shibuya Sky</td>
+                <td>권장</td>
+                <td>공식 웹사이트 사전 예매</td>
+                <td><span class="tag warn">아직 안 함</span></td>
+              </tr>
+              <tr>
+                <td>오마카세 런치</td>
+                <td>필수</td>
+                <td>공식 예약폼 / 전화</td>
+                <td><span class="tag danger">긴급</span></td>
+              </tr>
+              <tr>
+                <td>Late Night Vinyl Bar</td>
+                <td>권장</td>
+                <td>Instagram DM / 웹 링크</td>
+                <td><span class="tag">확인 필요</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="footer-note">
+            * 실제 서비스에서는 공식 사이트, 전화번호, 예약 가능 여부, 취소 마감일, 바우처 링크 등을 저장하게 만들면 좋아.
+          </div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card" id="checklist">
+          <div class="section-head">
+            <div>
+              <h3>필요한 물건 체크리스트</h3>
+              <p>직접 추가도 가능하고, 예시 템플릿을 불러온 뒤 상세 내용을 덧붙일 수도 있어.</p>
+            </div>
+            <div class="inline-actions" style="margin-top:0;">
+              <button class="btn-primary">해외여행 기본 템플릿</button>
+              <button class="btn-secondary">일본 여행 템플릿</button>
+            </div>
+          </div>
+
+          <div class="checklist-group">
+            <h4 style="margin:0 0 8px;">서류 / 결제</h4>
+            <div class="checklist-row">
+              <input type="checkbox" checked />
+              <div>
+                <strong>여권</strong>
+                <div class="subtle">만료일 6개월 이상 남았는지 확인</div>
+              </div>
+              <span class="tag good">완료</span>
+            </div>
+            <div class="checklist-row">
+              <input type="checkbox" />
+              <div>
+                <strong>eSIM / 유심</strong>
+                <div class="subtle">공항 수령인지, QR 즉시 개통인지 적어두기</div>
+              </div>
+              <span class="tag warn">구매 필요</span>
+            </div>
+            <div class="checklist-row">
+              <input type="checkbox" />
+              <div>
+                <strong>환전 / 트래블카드</strong>
+                <div class="subtle">환율 알림 기준 메모</div>
+              </div>
+              <span class="tag">메모 있음</span>
+            </div>
+          </div>
+
+          <div class="checklist-group">
+            <h4 style="margin:0 0 8px;">촬영 / 전자기기</h4>
+            <div class="checklist-row">
+              <input type="checkbox" checked />
+              <div>
+                <strong>보조배터리</strong>
+                <div class="subtle">릴스 촬영 많으면 2개 챙기기</div>
+              </div>
+              <span class="tag good">완료</span>
+            </div>
+            <div class="checklist-row">
+              <input type="checkbox" />
+              <div>
+                <strong>삼각대 / 셀카봉</strong>
+                <div class="subtle">야경 타임랩스 찍을 계획이면 필요</div>
+              </div>
+              <span class="tag">선택</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="budget">
+          <div class="section-head">
+            <div>
+              <h3>예산 & 실제 지출</h3>
+              <p>총예산과 카테고리별 예산, 실제 사용 금액을 가볍게 관리하는 화면</p>
+            </div>
+            <button class="btn-secondary">지출 추가</button>
+          </div>
+
+          <div class="money-grid">
+            <div class="stat">
+              <div class="value">₩2,300,000</div>
+              <div class="label">전체 예산</div>
+            </div>
+            <div class="stat">
+              <div class="value">₩1,560,000</div>
+              <div class="label">예상 사용</div>
+            </div>
+            <div class="stat">
+              <div class="value">₩740,000</div>
+              <div class="label">남은 예산</div>
+            </div>
+            <div class="stat">
+              <div class="value">68%</div>
+              <div class="label">예산 사용률</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <div class="item-head">
+              <div>
+                <h4>카테고리별 현황</h4>
+                <div class="subtle">숙소 100%, 식비 52%, 쇼핑 35%</div>
+              </div>
+              <span class="tag">JPY 환율 반영</span>
+            </div>
+            <div class="budget-bar"><div class="budget-fill"></div></div>
+          </div>
+
+          <div class="list" style="margin-top:12px;">
+            <div class="item">
+              <div class="item-head">
+                <div>
+                  <h4>Shibuya Stream Hotel</h4>
+                  <div class="subtle">숙소 · 공동 지출</div>
+                </div>
+                <strong>₩980,000</strong>
+              </div>
+            </div>
+            <div class="item">
+              <div class="item-head">
+                <div>
+                  <h4>브런치 예약금</h4>
+                  <div class="subtle">식비 · 카드 결제</div>
+                </div>
+                <strong>₩52,000</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card" id="phrases">
+          <div class="section-head">
+            <div>
+              <h3>나라별 필수 회화</h3>
+              <p>회화 모음집이 아니라, 실제 여행 상황에서 바로 보여주고 쓰는 버튼형 도구로 설계</p>
+            </div>
+          </div>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="airport">공항 / 입국</button>
+            <button class="tab" data-tab="hotel">숙소</button>
+            <button class="tab" data-tab="restaurant">식당</button>
+            <button class="tab" data-tab="transport">교통</button>
+            <button class="tab" data-tab="emergency">응급</button>
+          </div>
+
+          <div class="phrase-box active" id="airport">
+            <div class="phrase">
+              <div class="kr">관광하러 왔어요.</div>
+              <div class="local">観光で来ました。</div>
+              <div class="roman">Kankō de kimashita.</div>
+            </div>
+            <div class="phrase">
+              <div class="kr">숙소는 시부야에 있어요.</div>
+              <div class="local">宿泊先は渋谷です。</div>
+              <div class="roman">Shukuhakusaki wa Shibuya desu.</div>
+            </div>
+          </div>
+
+          <div class="phrase-box" id="hotel">
+            <div class="phrase">
+              <div class="kr">체크인 부탁드려요.</div>
+              <div class="local">チェックインをお願いします。</div>
+              <div class="roman">Chekkuin o onegaishimasu.</div>
+            </div>
+            <div class="phrase">
+              <div class="kr">짐을 잠시 맡길 수 있을까요?</div>
+              <div class="local">荷物を少し預けてもいいですか？</div>
+              <div class="roman">Nimotsu o sukoshi azuketemo ii desu ka?</div>
+            </div>
+          </div>
+
+          <div class="phrase-box" id="restaurant">
+            <div class="phrase">
+              <div class="kr">추천 메뉴가 뭐예요?</div>
+              <div class="local">おすすめは何ですか？</div>
+              <div class="roman">Osusume wa nan desu ka?</div>
+            </div>
+            <div class="phrase">
+              <div class="kr">이 재료는 빼주실 수 있나요?</div>
+              <div class="local">この材料は抜いてもらえますか？</div>
+              <div class="roman">Kono zairyō wa nuitemoraemasu ka?</div>
+            </div>
+          </div>
+
+          <div class="phrase-box" id="transport">
+            <div class="phrase">
+              <div class="kr">이 주소로 가주세요.</div>
+              <div class="local">この住所までお願いします。</div>
+              <div class="roman">Kono jūsho made onegaishimasu.</div>
+            </div>
+            <div class="phrase">
+              <div class="kr">가장 가까운 역이 어디예요?</div>
+              <div class="local">一番近い駅はどこですか？</div>
+              <div class="roman">Ichiban chikai eki wa doko desu ka?</div>
+            </div>
+          </div>
+
+          <div class="phrase-box" id="emergency">
+            <div class="phrase">
+              <div class="kr">도와주세요.</div>
+              <div class="local">助けてください。</div>
+              <div class="roman">Tasukete kudasai.</div>
+            </div>
+            <div class="phrase">
+              <div class="kr">병원이 필요해요.</div>
+              <div class="local">病院が必要です。</div>
+              <div class="roman">Byōin ga hitsuyō desu.</div>
+            </div>
+          </div>
+
+          <div class="inline-actions">
+            <button class="btn-primary">내 일정 기준 회화 추천</button>
+            <button class="btn-secondary">즐겨찾기 저장</button>
+          </div>
+        </section>
+
+        <section class="card" id="content">
+          <div class="section-head">
+            <div>
+              <h3>사진 / 릴스 / 숏폼 레퍼런스</h3>
+              <p>장소별로 어떤 구도와 컨셉이 많이 쓰이는지 보고 바로 일정에 반영하는 영역</p>
+            </div>
+            <button class="btn-secondary">레퍼런스 더 보기</button>
+          </div>
+          <div class="media-grid">
+            <div class="shot-card">
+              <div class="shot-thumb">ROOFTOP SKYLINE</div>
+              <div class="shot-body">
+                <strong>해질녘 실루엣</strong>
+                <div class="subtle">Shibuya Sky · 역광 인물샷</div>
+              </div>
+            </div>
+            <div class="shot-card">
+              <div class="shot-thumb">CAFE WINDOW SHOT</div>
+              <div class="shot-body">
+                <strong>창가 감성 컷</strong>
+                <div class="subtle">브런치 카페 · 메뉴와 손 연출</div>
+              </div>
+            </div>
+            <div class="shot-card">
+              <div class="shot-thumb">NIGHT STREET REEL</div>
+              <div class="shot-body">
+                <strong>야간 워킹 릴스</strong>
+                <div class="subtle">네온 조명 거리 · 짧은 이동 장면</div>
+              </div>
+            </div>
+          </div>
+          <div class="footer-note">
+            * 실제 서비스에서는 공개 게시물 임베드, 사용자가 저장한 링크, 장소별 촬영 메모를 연결하는 식으로 발전시킬 수 있어.
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    const tabs = document.querySelectorAll('.tab');
+    const boxes = document.querySelectorAll('.phrase-box');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        boxes.forEach(b => b.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    const navLinks = document.querySelectorAll('.nav a');
+    const sections = [...navLinks].map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`);
+          });
+        }
+      });
+    }, { threshold: 0.35 });
+
+    sections.forEach(section => observer.observe(section));
+  </script>
+</body>
+</html>
