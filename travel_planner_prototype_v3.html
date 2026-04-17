@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Travel Prep Workspace</title>
+<style>
+  :root{
+    --bg:#f7f8fb;
+    --card:#ffffff;
+    --line:#e5e7eb;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --primary:#2563eb;
+    --primary-soft:#dbeafe;
+    --danger:#dc2626;
+    --ok:#059669;
+    --shadow:0 10px 30px rgba(17,24,39,.06);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:linear-gradient(180deg,#f8fafc 0%,#f6f7fb 100%);
+    color:var(--text); font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+  }
+  header{
+    padding:28px 22px 18px; max-width:1200px; margin:0 auto;
+  }
+  h1{margin:0 0 8px;font-size:28px}
+  .sub{color:var(--muted)}
+  .container{
+    max-width:1200px; margin:0 auto 36px; padding:0 22px;
+    display:grid; grid-template-columns: 320px 1fr; gap:18px;
+  }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:18px;
+  }
+  .side .card{position:sticky; top:16px}
+  .grid{display:grid; gap:16px}
+  .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (max-width: 920px){
+    .container{grid-template-columns:1fr}
+    .grid.two,.grid.three{grid-template-columns:1fr}
+    .side .card{position:static}
+  }
+  label{display:block; font-weight:600; margin-bottom:6px}
+  input, textarea, select{
+    width:100%; border:1px solid var(--line); border-radius:12px; padding:11px 12px;
+    background:#fff; color:var(--text); outline:none;
+  }
+  input:focus, textarea:focus, select:focus{border-color:#93c5fd; box-shadow:0 0 0 4px rgba(37,99,235,.08)}
+  textarea{min-height:96px; resize:vertical}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .btn{
+    border:none; background:var(--primary); color:#fff; padding:10px 14px; border-radius:12px;
+    cursor:pointer; font-weight:700;
+  }
+  .btn.secondary{background:#eef2ff; color:#3730a3}
+  .btn.ghost{background:#fff; color:var(--text); border:1px solid var(--line)}
+  .btn.danger{background:#fee2e2; color:#991b1b}
+  .btn.small{padding:8px 11px; font-size:12px; border-radius:10px}
+  .section-title{font-size:18px; margin:0 0 10px}
+  .hint{font-size:12px; color:var(--muted)}
+  .pill{
+    display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+    background:var(--primary-soft); color:#1d4ed8; font-weight:700; font-size:12px;
+  }
+  .list{display:grid; gap:10px}
+  .item{
+    border:1px solid var(--line); border-radius:14px; padding:14px; background:#fff;
+  }
+  .item h4{margin:0 0 6px; font-size:15px}
+  .meta{color:var(--muted); font-size:12px}
+  .spacer{height:6px}
+  .sum{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;
+  }
+  .kpi{
+    padding:12px; border-radius:14px; background:#f8fafc; border:1px solid var(--line);
+  }
+  .kpi .n{font-size:22px; font-weight:800}
+  .autocomplete-wrap{position:relative}
+  .suggestions{
+    position:absolute; left:0; right:0; top:calc(100% + 6px); background:#fff; border:1px solid var(--line);
+    border-radius:12px; box-shadow:var(--shadow); max-height:210px; overflow:auto; z-index:20; display:none;
+  }
+  .suggestions.show{display:block}
+  .suggestion{
+    padding:10px 12px; cursor:pointer; border-bottom:1px solid #f2f4f7;
+  }
+  .suggestion:last-child{border-bottom:none}
+  .suggestion:hover{background:#f8fafc}
+  .muted-box{
+    background:#f8fafc; border:1px solid var(--line); border-radius:14px; padding:12px;
+  }
+  .check-row{display:flex; align-items:flex-start; gap:10px}
+  .check-row input[type="checkbox"]{width:18px; height:18px; margin-top:2px}
+  .done{text-decoration:line-through; color:var(--muted)}
+  .tag{
+    display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; background:#f3f4f6; color:#374151; margin-right:6px;
+  }
+  a{color:#1d4ed8}
+  .tabs{display:flex; gap:8px; flex-wrap:wrap}
+  .tab{padding:8px 12px; border-radius:999px; border:1px solid var(--line); cursor:pointer; background:#fff}
+  .tab.active{background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; font-weight:700}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="pill">실제로 입력·저장되는 버전</div>
+  <h1>여행 준비 웹사이트 프로토타입</h1>
+  <div class="sub">짧은 구글맵 공유 링크를 브라우저만으로 자동 펼쳐 읽는 기능은 뺐고, 대신 지금 당장 쓸 수 있는 가져오기 방법만 남겼어.</div>
+</header>
+
+<div class="container">
+  <div class="side">
+    <div class="card">
+      <h3 class="section-title">빠른 안내</h3>
+      <div class="muted-box">
+        <b>구글맵 링크 붙여넣기</b>만으로 목록 전체를 자동 읽어오는 건 이 HTML 단독 버전에선 안 돼.<br><br>
+        대신 아래 <b>실제로 되는 방식</b>을 넣었어.
+        <div class="spacer"></div>
+        <div>1) 장소 텍스트 여러 줄 붙여넣기</div>
+        <div>2) Google Takeout JSON 파일 업로드</div>
+        <div>3) 공유 링크는 참고 링크로 저장</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" onclick="saveAll()">전체 저장</button>
+      <button class="btn ghost" onclick="resetAll()">초기화</button>
+      <div class="spacer"></div>
+      <div class="hint">모든 데이터는 브라우저의 localStorage에 저장돼.</div>
+
+      <div class="sum">
+        <div class="kpi"><div class="meta">일정 장소</div><div class="n" id="kpiPlaces">0</div></div>
+        <div class="kpi"><div class="meta">체크리스트</div><div class="n" id="kpiChecklist">0</div></div>
+        <div class="kpi"><div class="meta">예산</div><div class="n" id="kpiBudget">0</div></div>
+        <div class="kpi"><div class="meta">지출</div><div class="n" id="kpiSpent">0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3 class="section-title">1. 여행 기본 정보</h3>
+      <div class="grid two">
+        <div>
+          <label>여행 이름</label>
+          <input id="tripName" placeholder="예: 일본 봄 여행" />
+        </div>
+        <div>
+          <label>같이 가는 사람</label>
+          <input id="companions" placeholder="예: 친구 2명, 가족" />
+        </div>
+
+        <div class="autocomplete-wrap">
+          <label>나라</label>
+          <input id="country" placeholder="나라 입력" autocomplete="off" />
+          <div class="suggestions" id="countrySuggestions"></div>
+        </div>
+
+        <div class="autocomplete-wrap">
+          <label>지역 / 도시</label>
+          <input id="city" placeholder="도시 입력" autocomplete="off" />
+          <div class="suggestions" id="citySuggestions"></div>
+        </div>
+
+        <div>
+          <label>시작일</label>
+          <input id="startDate" type="date" />
+        </div>
+        <div>
+          <label>종료일</label>
+          <input id="endDate" type="date" />
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="grid two">
+        <div>
+          <label>숙소 이름</label>
+          <input id="stayName" placeholder="예: Hotel Gracery Shinjuku" />
+        </div>
+        <div>
+          <label>숙소 주소 / 메모</label>
+          <input id="stayAddress" placeholder="주소 또는 메모" />
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="row">
+        <button class="btn secondary" onclick="openStaySearch()">구글맵에서 숙소 검색</button>
+        <span class="hint">숙소 이름과 도시가 있으면 검색어에 같이 넣어 열어줘.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">2. 일정 장소</h3>
+      <div class="grid two">
+        <div>
+          <label>장소 이름</label>
+          <input id="placeName" placeholder="예: 센소지" />
+        </div>
+        <div>
+          <label>카테고리</label>
+          <select id="placeCategory">
+            <option>관광지</option>
+            <option>맛집</option>
+            <option>카페</option>
+            <option>쇼핑</option>
+            <option>포토스팟</option>
+            <option>숙소</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div>
+          <label>방문 날짜</label>
+          <input id="placeDate" type="date" />
+        </div>
+        <div>
+          <label>희망 시간대</label>
+          <select id="placeTime">
+            <option>상관없음</option>
+            <option>아침</option>
+            <option>점심</option>
+            <option>오후</option>
+            <option>저녁</option>
+            <option>야간</option>
+          </select>
+        </div>
+        <div>
+          <label>주소 / 링크</label>
+          <input id="placeAddress" placeholder="주소 또는 지도 링크" />
+        </div>
+        <div>
+          <label>메모</label>
+          <input id="placeMemo" placeholder="예: 야경 보기 좋은 시간" />
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="row">
+        <button class="btn" onclick="addPlace()">장소 추가</button>
+        <button class="btn ghost" onclick="sortPlacesByDate()">날짜순 정렬</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="list" id="placeList"></div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">3. 가져오기</h3>
+      <div class="tabs">
+        <div class="tab active" data-tab="paste" onclick="switchTab('paste', this)">텍스트 붙여넣기</div>
+        <div class="tab" data-tab="takeout" onclick="switchTab('takeout', this)">Takeout 파일</div>
+        <div class="tab" data-tab="link" onclick="switchTab('link', this)">공유 링크 저장</div>
+      </div>
+
+      <div id="tab-paste">
+        <div class="spacer"></div>
+        <label>장소 목록 붙여넣기</label>
+        <textarea id="bulkPlaces" placeholder="한 줄에 하나씩 붙여넣기&#10;예:&#10;센소지&#10;시부야 스카이&#10;나카메구로 스타벅스 리저브"></textarea>
+        <div class="row">
+          <button class="btn" onclick="importBulkPlaces()">붙여넣은 장소 일정에 추가</button>
+          <span class="hint">가장 현실적으로 바로 쓸 수 있는 방식.</span>
+        </div>
+      </div>
+
+      <div id="tab-takeout" class="hidden">
+        <div class="spacer"></div>
+        <label>Google Takeout JSON 업로드</label>
+        <input id="takeoutFile" type="file" accept=".json,application/json" />
+        <div class="spacer"></div>
+        <div class="row">
+          <button class="btn" onclick="importTakeout()">파일에서 장소 읽기</button>
+          <span class="hint">파일 구조가 제각각일 수 있어서 제목/주소 위주로 읽는다.</span>
+        </div>
+      </div>
+
+      <div id="tab-link" class="hidden">
+        <div class="spacer"></div>
+        <label>구글맵 공유 링크 저장</label>
+        <input id="sharedMapLink" placeholder="https://maps.app.goo.gl/..." />
+        <div class="spacer"></div>
+        <div class="row">
+          <button class="btn" onclick="saveSharedLink()">링크 저장</button>
+          <button class="btn ghost" onclick="openSharedLink()">링크 열기</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="hint">짧은 링크 하나만으로 목록 전체를 자동 읽는 건 이 버전에선 안 하고, 참고 링크로만 저장해.</div>
+      </div>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <h3 class="section-title">4. 체크리스트</h3>
+        <div class="row">
+          <button class="btn secondary small" onclick="loadChecklistTemplate('japan')">일본 여행 예시 불러오기</button>
+          <button class="btn secondary small" onclick="loadChecklistTemplate('basic')">해외여행 기본</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="grid two">
+          <div><input id="checkTitle" placeholder="항목명" /></div>
+          <div><input id="checkDetail" placeholder="상세 내용 / 수량 / 메모" /></div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn" onclick="addChecklist()">체크리스트 추가</button>
+        <div class="spacer"></div>
+        <div class="list" id="checkList"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">5. 예산 / 지출</h3>
+        <div class="grid two">
+          <div>
+            <label>총 예산</label>
+            <input id="budgetTotal" type="number" placeholder="예: 1500000" />
+          </div>
+          <div>
+            <label>통화</label>
+            <select id="budgetCurrency">
+              <option>KRW</option>
+              <option>JPY</option>
+              <option>USD</option>
+              <option>EUR</option>
+            </select>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div class="row">
+          <button class="btn" onclick="saveBudget()">예산 저장</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="grid three">
+          <div><input id="expenseTitle" placeholder="지출 항목" /></div>
+          <div><input id="expenseCategory" placeholder="카테고리 예: 식비" /></div>
+          <div><input id="expenseAmount" type="number" placeholder="금액" /></div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn" onclick="addExpense()">지출 추가</button>
+        <div class="spacer"></div>
+        <div class="list" id="expenseList"></div>
+      </div>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <h3 class="section-title">6. 예약 정보</h3>
+        <div class="grid two">
+          <div><input id="bookingPlace" placeholder="장소 이름" /></div>
+          <div><input id="bookingMethod" placeholder="예약 방법 예: 공식 사이트 / 전화 / 캐치테이블" /></div>
+          <div><input id="bookingLink" placeholder="예약 링크" /></div>
+          <div><input id="bookingMemo" placeholder="메모 예: 2주 전 오픈" /></div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn" onclick="addBooking()">예약 정보 추가</button>
+        <div class="spacer"></div>
+        <div class="list" id="bookingList"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">7. 필수 회화</h3>
+        <div class="grid two">
+          <div>
+            <label>언어</label>
+            <select id="phraseLang" onchange="renderPhrases()">
+              <option value="ja">일본어</option>
+              <option value="en">영어</option>
+            </select>
+          </div>
+          <div>
+            <label>분야</label>
+            <select id="phraseCategory" onchange="renderPhrases()">
+              <option value="all">전체</option>
+              <option value="airport">공항/입국</option>
+              <option value="transport">교통</option>
+              <option value="hotel">숙소</option>
+              <option value="food">식당</option>
+              <option value="shopping">쇼핑</option>
+              <option value="emergency">응급</option>
+            </select>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div class="list" id="phraseList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const countries = [
+  "일본","대한민국","대만","태국","베트남","싱가포르","말레이시아","인도네시아","인도","영국","프랑스","독일","이탈리아","스페인","포르투갈","네덜란드","벨기에","스위스","오스트리아","체코","헝가리","아이슬란드","아일랜드","호주","뉴질랜드","미국","캐나다","멕시코"
+];
+
+const cityMap = {
+  "일본":["도쿄","오사카","교토","후쿠오카","삿포로","나고야","오키나와","고베","나라","요코하마"],
+  "대한민국":["서울","부산","제주","강릉","경주","여수","전주"],
+  "대만":["타이베이","타이중","가오슝","타이난"],
+  "태국":["방콕","치앙마이","푸켓","파타야"],
+  "베트남":["다낭","하노이","호치민","호이안","나트랑"],
+  "영국":["런던","에든버러","맨체스터"],
+  "이탈리아":["로마","피렌체","밀라노","베네치아","나폴리"],
+  "미국":["뉴욕","로스앤젤레스","샌프란시스코","하와이","라스베이거스"]
+};
+
+const phraseData = {
+  ja: [
+    {cat:"airport", ko:"입국 심사는 어디에서 하나요?", local:"入国審査はどこですか？", roman:"Nyūkoku shinsa wa doko desu ka?"},
+    {cat:"transport", ko:"이 열차는 시부야에 가나요?", local:"この電車は渋谷に行きますか？", roman:"Kono densha wa Shibuya ni ikimasu ka?"},
+    {cat:"hotel", ko:"체크인하고 싶어요.", local:"チェックインしたいです。", roman:"Chekkuin shitai desu."},
+    {cat:"food", ko:"추천 메뉴가 뭐예요?", local:"おすすめは何ですか？", roman:"Osusume wa nan desu ka?"},
+    {cat:"food", ko:"이거 빼주세요.", local:"これは抜いてください。", roman:"Kore wa nuite kudasai."},
+    {cat:"shopping", ko:"면세 되나요?", local:"免税できますか？", roman:"Menzei dekimasu ka?"},
+    {cat:"emergency", ko:"도와주세요.", local:"助けてください。", roman:"Tasukete kudasai."},
+  ],
+  en: [
+    {cat:"airport", ko:"입국 심사는 어디에서 하나요?", local:"Where is immigration?", roman:"Where is immigration?"},
+    {cat:"transport", ko:"이 버스는 시내로 가나요?", local:"Does this bus go downtown?", roman:"Does this bus go downtown?"},
+    {cat:"hotel", ko:"체크인하고 싶어요.", local:"I'd like to check in.", roman:"I'd like to check in."},
+    {cat:"food", ko:"추천 메뉴가 뭐예요?", local:"What do you recommend?", roman:"What do you recommend?"},
+    {cat:"shopping", ko:"카드 결제 되나요?", local:"Can I pay by card?", roman:"Can I pay by card?"},
+    {cat:"emergency", ko:"병원이 필요해요.", local:"I need a hospital.", roman:"I need a hospital."}
+  ]
+};
+
+let state = {
+  trip:{},
+  places:[],
+  checklist:[],
+  expenses:[],
+  budget:{total:0,currency:"KRW"},
+  bookings:[],
+  sharedLink:""
+};
+
+function qs(id){ return document.getElementById(id); }
+
+function saveAll(){
+  state.trip = {
+    tripName:qs('tripName').value,
+    companions:qs('companions').value,
+    country:qs('country').value,
+    city:qs('city').value,
+    startDate:qs('startDate').value,
+    endDate:qs('endDate').value,
+    stayName:qs('stayName').value,
+    stayAddress:qs('stayAddress').value
+  };
+  localStorage.setItem('travelPlannerStateV3', JSON.stringify(state));
+  updateKPIs();
+  alert('저장했어.');
+}
+
+function loadAll(){
+  const raw = localStorage.getItem('travelPlannerStateV3');
+  if(raw){
+    state = JSON.parse(raw);
+  }
+  const t = state.trip || {};
+  qs('tripName').value = t.tripName || '';
+  qs('companions').value = t.companions || '';
+  qs('country').value = t.country || '';
+  qs('city').value = t.city || '';
+  qs('startDate').value = t.startDate || '';
+  qs('endDate').value = t.endDate || '';
+  qs('stayName').value = t.stayName || '';
+  qs('stayAddress').value = t.stayAddress || '';
+  qs('budgetTotal').value = state.budget?.total || '';
+  qs('budgetCurrency').value = state.budget?.currency || 'KRW';
+  qs('sharedMapLink').value = state.sharedLink || '';
+  renderPlaces(); renderChecklist(); renderExpenses(); renderBookings(); renderPhrases(); updateKPIs();
+}
+
+function resetAll(){
+  if(!confirm('정말 초기화할까?')) return;
+  localStorage.removeItem('travelPlannerStateV3');
+  location.reload();
+}
+
+function setupAutocomplete(inputId, boxId, sourceFn, onPick){
+  const input = qs(inputId), box = qs(boxId);
+  input.addEventListener('input', ()=>{
+    const q = input.value.trim();
+    const items = sourceFn(q);
+    box.innerHTML = '';
+    if(!q || items.length === 0){ box.classList.remove('show'); return; }
+    items.forEach(item=>{
+      const div = document.createElement('div');
+      div.className = 'suggestion';
+      div.textContent = item;
+      div.onclick = ()=>{
+        input.value = item;
+        box.classList.remove('show');
+        if(onPick) onPick(item);
+      };
+      box.appendChild(div);
+    });
+    box.classList.add('show');
+  });
+  document.addEventListener('click', (e)=>{
+    if(!box.contains(e.target) && e.target !== input) box.classList.remove('show');
+  });
+}
+
+setupAutocomplete('country', 'countrySuggestions', (q)=>{
+  return countries.filter(x => x.includes(q)).slice(0,10);
+}, (picked)=>{
+  const cities = cityMap[picked] || [];
+  if(cities.length){
+    qs('city').value = '';
+  }
+});
+
+setupAutocomplete('city', 'citySuggestions', (q)=>{
+  const country = qs('country').value.trim();
+  const pool = cityMap[country] || Object.values(cityMap).flat();
+  return pool.filter(x => x.includes(q)).slice(0,10);
+});
+
+function openStaySearch(){
+  const q = [qs('stayName').value, qs('city').value, qs('country').value].filter(Boolean).join(' ');
+  const url = 'https://www.google.com/maps/search/' + encodeURIComponent(q || 'hotel');
+  window.open(url, '_blank');
+}
+
+function addPlace(){
+  const name = qs('placeName').value.trim();
+  if(!name){ alert('장소 이름을 입력해줘.'); return; }
+  state.places.push({
+    id:Date.now(),
+    name,
+    category:qs('placeCategory').value,
+    date:qs('placeDate').value,
+    time:qs('placeTime').value,
+    address:qs('placeAddress').value.trim(),
+    memo:qs('placeMemo').value.trim()
+  });
+  ['placeName','placeAddress','placeMemo'].forEach(id=>qs(id).value='');
+  qs('placeDate').value='';
+  renderPlaces(); saveAll();
+}
+
+function renderPlaces(){
+  const list = qs('placeList'); list.innerHTML = '';
+  state.places.forEach(p=>{
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <div class="row" style="justify-content:space-between">
+        <h4>${escapeHtml(p.name)}</h4>
+        <button class="btn danger small" onclick="removePlace(${p.id})">삭제</button>
+      </div>
+      <div class="meta">${escapeHtml(p.category)} · ${escapeHtml(p.date || '날짜 미정')} · ${escapeHtml(p.time || '시간대 미정')}</div>
+      ${p.address ? `<div class="spacer"></div><div>${escapeHtml(p.address)}</div>`:''}
+      ${p.memo ? `<div class="meta" style="margin-top:6px">${escapeHtml(p.memo)}</div>`:''}
+    `;
+    list.appendChild(div);
+  });
+}
+
+function removePlace(id){
+  state.places = state.places.filter(p=>p.id!==id);
+  renderPlaces(); saveAll();
+}
+
+function sortPlacesByDate(){
+  state.places.sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'));
+  renderPlaces(); saveAll();
+}
+
+function switchTab(name, el){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  ['paste','takeout','link'].forEach(t=>qs('tab-'+t).classList.add('hidden'));
+  qs('tab-'+name).classList.remove('hidden');
+}
+
+function importBulkPlaces(){
+  const lines = qs('bulkPlaces').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(!lines.length){ alert('붙여넣은 내용이 없어.'); return; }
+  lines.forEach(line=>{
+    state.places.push({
+      id:Date.now()+Math.random(),
+      name:line,
+      category:'관광지',
+      date:'',
+      time:'상관없음',
+      address:'',
+      memo:'텍스트 붙여넣기로 가져옴'
+    });
+  });
+  qs('bulkPlaces').value='';
+  renderPlaces(); saveAll();
+  alert(`${lines.length}개 장소를 추가했어.`);
+}
+
+function collectStrings(obj, arr=[]){
+  if(obj == null) return arr;
+  if(typeof obj === 'string') arr.push(obj);
+  else if(Array.isArray(obj)) obj.forEach(x=>collectStrings(x, arr));
+  else if(typeof obj === 'object') Object.values(obj).forEach(v=>collectStrings(v, arr));
+  return arr;
+}
+
+function importTakeout(){
+  const file = qs('takeoutFile').files[0];
+  if(!file){ alert('JSON 파일을 선택해줘.'); return; }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      const strings = collectStrings(data);
+      const candidates = [...new Set(strings.filter(s=>{
+        const x = s.trim();
+        return x.length >= 2 && x.length <= 120 &&
+          !x.startsWith('http') &&
+          !/^\d{4}-\d{2}-\d{2}/.test(x);
+      }))].slice(0,200);
+      if(!candidates.length){ alert('읽을 만한 텍스트를 찾지 못했어.'); return; }
+      candidates.forEach(name=>{
+        state.places.push({
+          id:Date.now()+Math.random(),
+          name,
+          category:'관광지',
+          date:'',
+          time:'상관없음',
+          address:'',
+          memo:'Takeout JSON에서 가져옴'
+        });
+      });
+      renderPlaces(); saveAll();
+      alert(`파일에서 후보 ${candidates.length}개를 가져왔어. 필요 없는 건 삭제해줘.`);
+    }catch(e){
+      alert('JSON 파싱에 실패했어. 다른 파일인지 확인해줘.');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function saveSharedLink(){
+  state.sharedLink = qs('sharedMapLink').value.trim();
+  saveAll();
+}
+
+function openSharedLink(){
+  const v = qs('sharedMapLink').value.trim();
+  if(!v){ alert('링크를 입력해줘.'); return; }
+  window.open(v, '_blank');
+}
+
+const checklistTemplates = {
+  basic:[
+    ["여권","유효기간 확인"],["충전기","휴대폰/보조배터리"],["상비약","소화제, 진통제"],["세면도구","칫솔, 치약"],["환전/카드","해외결제 확인"]
+  ],
+  japan:[
+    ["여권","유효기간 확인"],["Visit Japan 준비","필요 시 확인"],["엔화","현금 조금"],["동전지갑","자주 쓰면 편함"],["멀티어댑터","필요 시"],["유심/eSIM","개통 확인"]
+  ]
+};
+
+function loadChecklistTemplate(key){
+  checklistTemplates[key].forEach(([title,detail])=>{
+    state.checklist.push({id:Date.now()+Math.random(), title, detail, done:false});
+  });
+  renderChecklist(); saveAll();
+}
+
+function addChecklist(){
+  const title = qs('checkTitle').value.trim();
+  if(!title){ alert('항목명을 입력해줘.'); return; }
+  state.checklist.push({id:Date.now(), title, detail:qs('checkDetail').value.trim(), done:false});
+  qs('checkTitle').value=''; qs('checkDetail').value='';
+  renderChecklist(); saveAll();
+}
+
+function toggleChecklist(id){
+  const item = state.checklist.find(x=>x.id===id);
+  if(item) item.done = !item.done;
+  renderChecklist(); saveAll();
+}
+function removeChecklist(id){
+  state.checklist = state.checklist.filter(x=>x.id!==id);
+  renderChecklist(); saveAll();
+}
+function renderChecklist(){
+  const list = qs('checkList'); list.innerHTML = '';
+  state.checklist.forEach(c=>{
+    const div = document.createElement('div');
+    div.className='item';
+    div.innerHTML = `
+      <div class="check-row">
+        <input type="checkbox" ${c.done?'checked':''} onchange="toggleChecklist(${c.id})" />
+        <div style="flex:1">
+          <div class="${c.done?'done':''}"><b>${escapeHtml(c.title)}</b></div>
+          ${c.detail?`<div class="meta ${c.done?'done':''}">${escapeHtml(c.detail)}</div>`:''}
+        </div>
+        <button class="btn danger small" onclick="removeChecklist(${c.id})">삭제</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function saveBudget(){
+  state.budget = {
+    total:Number(qs('budgetTotal').value || 0),
+    currency:qs('budgetCurrency').value
+  };
+  saveAll();
+}
+
+function addExpense(){
+  const title = qs('expenseTitle').value.trim();
+  const amount = Number(qs('expenseAmount').value || 0);
+  if(!title || !amount){ alert('지출 항목과 금액을 입력해줘.'); return; }
+  state.expenses.push({
+    id:Date.now(),
+    title,
+    category:qs('expenseCategory').value.trim() || '기타',
+    amount
+  });
+  qs('expenseTitle').value=''; qs('expenseCategory').value=''; qs('expenseAmount').value='';
+  renderExpenses(); saveAll();
+}
+function removeExpense(id){
+  state.expenses = state.expenses.filter(x=>x.id!==id);
+  renderExpenses(); saveAll();
+}
+function renderExpenses(){
+  const list = qs('expenseList'); list.innerHTML = '';
+  state.expenses.forEach(e=>{
+    const div = document.createElement('div');
+    div.className='item';
+    div.innerHTML = `
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h4>${escapeHtml(e.title)}</h4>
+          <div class="meta">${escapeHtml(e.category)} · ${fmtMoney(e.amount)} ${escapeHtml(state.budget?.currency || 'KRW')}</div>
+        </div>
+        <button class="btn danger small" onclick="removeExpense(${e.id})">삭제</button>
+      </div>`;
+    list.appendChild(div);
+  });
+  updateKPIs();
+}
+
+function addBooking(){
+  const place = qs('bookingPlace').value.trim();
+  if(!place){ alert('장소 이름을 입력해줘.'); return; }
+  state.bookings.push({
+    id:Date.now(),
+    place,
+    method:qs('bookingMethod').value.trim(),
+    link:qs('bookingLink').value.trim(),
+    memo:qs('bookingMemo').value.trim()
+  });
+  ['bookingPlace','bookingMethod','bookingLink','bookingMemo'].forEach(id=>qs(id).value='');
+  renderBookings(); saveAll();
+}
+function removeBooking(id){
+  state.bookings = state.bookings.filter(x=>x.id!==id);
+  renderBookings(); saveAll();
+}
+function renderBookings(){
+  const list = qs('bookingList'); list.innerHTML = '';
+  state.bookings.forEach(b=>{
+    const div = document.createElement('div');
+    div.className='item';
+    div.innerHTML = `
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h4>${escapeHtml(b.place)}</h4>
+          ${b.method?`<div class="meta">${escapeHtml(b.method)}</div>`:''}
+          ${b.link?`<div><a href="${escapeAttr(b.link)}" target="_blank" rel="noopener">예약 링크 열기</a></div>`:''}
+          ${b.memo?`<div class="meta">${escapeHtml(b.memo)}</div>`:''}
+        </div>
+        <button class="btn danger small" onclick="removeBooking(${b.id})">삭제</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function renderPhrases(){
+  const lang = qs('phraseLang').value;
+  const cat = qs('phraseCategory').value;
+  const list = qs('phraseList'); list.innerHTML = '';
+  phraseData[lang].filter(p => cat === 'all' || p.cat === cat).forEach(p=>{
+    const div = document.createElement('div');
+    div.className='item';
+    div.innerHTML = `
+      <div><span class="tag">${labelCat(p.cat)}</span></div>
+      <h4>${escapeHtml(p.ko)}</h4>
+      <div>${escapeHtml(p.local)}</div>
+      <div class="meta">${escapeHtml(p.roman)}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function labelCat(cat){
+  return {
+    airport:'공항/입국',
+    transport:'교통',
+    hotel:'숙소',
+    food:'식당',
+    shopping:'쇼핑',
+    emergency:'응급'
+  }[cat] || cat;
+}
+
+function updateKPIs(){
+  qs('kpiPlaces').textContent = state.places.length;
+  qs('kpiChecklist').textContent = state.checklist.length;
+  qs('kpiBudget').textContent = fmtMoney(state.budget?.total || 0);
+  const spent = state.expenses.reduce((a,b)=>a+Number(b.amount||0),0);
+  qs('kpiSpent').textContent = fmtMoney(spent);
+}
+
+function fmtMoney(n){ return Number(n||0).toLocaleString('ko-KR'); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
+function escapeAttr(s){ return escapeHtml(s); }
+
+loadAll();
+</script>
+</body>
+</html>
