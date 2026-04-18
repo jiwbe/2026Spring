@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>인스타 스토리 사진 배치 추천기</title>
+  <style>
+    :root{
+      --bg:#0f1115;
+      --panel:#171a21;
+      --soft:#212633;
+      --line:#31384a;
+      --text:#f3f5f8;
+      --muted:#b7c0d1;
+      --accent:#8ab4ff;
+      --accent2:#9ef0c7;
+      --danger:#ff9b9b;
+      --shadow:0 12px 28px rgba(0,0,0,.25);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+      background:linear-gradient(180deg,#0d1016,#121722 35%,#0d1016);
+      color:var(--text);
+    }
+    .wrap{
+      width:min(1280px, calc(100% - 32px));
+      margin:24px auto 40px;
+      display:grid;
+      grid-template-columns: 380px 1fr;
+      gap:20px;
+    }
+    .card{
+      background:rgba(23,26,33,.92);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .panel{
+      padding:18px;
+    }
+    h1{
+      font-size:24px;
+      margin:0 0 8px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+      margin-bottom:18px;
+    }
+    h2{
+      font-size:15px;
+      margin:18px 0 10px;
+      color:#fff;
+    }
+    label{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    input[type="file"], textarea, select, button, input[type="text"]{
+      width:100%;
+      border:none;
+      border-radius:14px;
+      background:var(--soft);
+      color:var(--text);
+      padding:12px 14px;
+      outline:none;
+      border:1px solid transparent;
+      transition:.18s ease;
+      font-size:14px;
+    }
+    textarea{
+      min-height:90px;
+      resize:vertical;
+      line-height:1.5;
+    }
+    input[type="file"]:focus, textarea:focus, select:focus, input[type="text"]:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 4px rgba(138,180,255,.12);
+    }
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .btns{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+    button{
+      cursor:pointer;
+      font-weight:700;
+      background:linear-gradient(135deg, rgba(138,180,255,.18), rgba(158,240,199,.14));
+      border:1px solid rgba(138,180,255,.24);
+    }
+    button:hover{transform:translateY(-1px)}
+    button.secondary{
+      background:var(--soft);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .thumbs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .thumb{
+      width:68px;height:68px;border-radius:12px;overflow:hidden;position:relative;
+      background:#0c0f14;border:1px solid rgba(255,255,255,.08);
+    }
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .thumb span{
+      position:absolute;left:6px;bottom:6px;font-size:11px;padding:2px 6px;border-radius:999px;
+      background:rgba(0,0,0,.6); color:#fff;
+    }
+    .stage-wrap{
+      padding:18px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      min-height:100%;
+    }
+    .story-shell{
+      width:min(100%, 440px);
+    }
+    .story{
+      width:100%;
+      aspect-ratio:9 / 16;
+      background:#0f131b;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:28px;
+      overflow:hidden;
+      position:relative;
+      box-shadow:var(--shadow);
+    }
+    .story-grid{
+      position:absolute; inset:0;
+      display:grid;
+      gap:10px;
+      padding:14px;
+    }
+    .cell{
+      position:relative;
+      overflow:hidden;
+      border-radius:18px;
+      background:#1d2330;
+      min-height:50px;
+    }
+    .cell img{
+      width:100%; height:100%; object-fit:cover; display:block;
+      filter:saturate(1.02) contrast(1.02);
+    }
+    .cell .empty{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      color:#8e99ac; font-size:13px; background:linear-gradient(135deg,#171d28,#222a38);
+      text-align:center; padding:14px;
+    }
+    .story-caption{
+      position:absolute;
+      left:20px; right:20px; bottom:20px;
+      background:rgba(0,0,0,.42);
+      backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:14px 16px;
+      line-height:1.45;
+      font-size:16px;
+      white-space:pre-wrap;
+    }
+    .chips{
+      display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+    }
+    .chip{
+      padding:8px 10px; border-radius:999px;
+      font-size:12px; color:#dce5f6;
+      background:#202634; border:1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+    }
+    .chip.active{ border-color:rgba(138,180,255,.55); background:rgba(138,180,255,.16);}
+    .section-note{
+      color:var(--muted); font-size:12px; line-height:1.5; margin-top:8px;
+    }
+    .result{
+      background:#111620;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px 14px;
+      margin-top:10px;
+      line-height:1.6;
+      color:#e9edf7;
+      font-size:14px;
+      white-space:pre-wrap;
+    }
+    .muted{color:var(--muted)}
+    .footer-tip{
+      margin-top:10px;font-size:12px;color:var(--muted); line-height:1.5;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns:1fr}
+      .story-shell{width:min(100%, 420px)}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="panel">
+        <h1>인스타 스토리 사진 배치 추천기</h1>
+        <div class="sub">
+          사진 여러 장을 넣으면 업로드 순서, 스토리 배치, 그리고 같이 올리기 좋은 멘트를 자동으로 추천합니다.
+          HTML 한 파일이라 브라우저에서 바로 실행할 수 있습니다.
+        </div>
+
+        <h2>1) 사진 업로드</h2>
+        <label for="files">사진 여러 장 선택</label>
+        <input id="files" type="file" accept="image/*" multiple />
+        <div id="thumbs" class="thumbs"></div>
+
+        <h2>2) 분위기 선택</h2>
+        <div id="toneChips" class="chips">
+          <button class="chip active" data-tone="감성">감성</button>
+          <button class="chip" data-tone="일상">일상</button>
+          <button class="chip" data-tone="여행">여행</button>
+          <button class="chip" data-tone="맛집">맛집</button>
+          <button class="chip" data-tone="친구">친구</button>
+          <button class="chip" data-tone="기록">기록</button>
+        </div>
+
+        <h2>3) 하고 싶은 말</h2>
+        <label for="keywords">키워드 / 상황 설명</label>
+        <input id="keywords" type="text" placeholder="예: 주말 부산 여행, 바다, 친구들이랑, 행복했다" />
+
+        <label for="note" style="margin-top:10px;">추가 메모</label>
+        <textarea id="note" placeholder="예: 첫 장은 분위기 있게, 마지막은 웃긴 사진으로 마무리하고 싶음"></textarea>
+
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <label for="layoutMode">배치 스타일</label>
+            <select id="layoutMode">
+              <option value="auto">자동 추천</option>
+              <option value="clean">깔끔</option>
+              <option value="dynamic">다이나믹</option>
+              <option value="collage">콜라주</option>
+            </select>
+          </div>
+          <div>
+            <label for="captionMode">멘트 스타일</label>
+            <select id="captionMode">
+              <option value="auto">자동 추천</option>
+              <option value="short">짧게</option>
+              <option value="mood">감성 있게</option>
+              <option value="fun">가볍고 재밌게</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button id="analyzeBtn">배치/멘트 추천하기</button>
+          <button id="shuffleBtn" class="secondary">다른 추천 보기</button>
+        </div>
+
+        <div class="section-note">
+          추천 로직은 사진 개수, 가로/세로 비율, 분위기 키워드를 보고 결정합니다.
+        </div>
+
+        <h2>추천 결과</h2>
+        <div id="result" class="result">사진을 넣고 “배치/멘트 추천하기”를 눌러주세요.</div>
+        <div class="footer-tip">
+          팁: 인스타 스토리는 보통 1장에 시선을 끄는 사진, 2~4장에 디테일 컷을 섞으면 반응이 좋습니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stage-wrap">
+        <div class="story-shell">
+          <div class="story" id="story">
+            <div id="storyGrid" class="story-grid"></div>
+            <div id="storyCaption" class="story-caption">여기에 추천 멘트가 표시됩니다.</div>
+          </div>
+          <div class="section-note" style="padding:12px 6px 0;">
+            미리보기는 인스타그램 스토리 비율(9:16)에 맞춰 표시됩니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const filesEl = document.getElementById('files');
+  const thumbsEl = document.getElementById('thumbs');
+  const resultEl = document.getElementById('result');
+  const storyGrid = document.getElementById('storyGrid');
+  const storyCaption = document.getElementById('storyCaption');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const keywordsEl = document.getElementById('keywords');
+  const noteEl = document.getElementById('note');
+  const layoutModeEl = document.getElementById('layoutMode');
+  const captionModeEl = document.getElementById('captionMode');
+  const toneChips = [...document.querySelectorAll('#toneChips .chip')];
+
+  let images = [];
+  let currentTone = '감성';
+  let seed = 0;
+
+  toneChips.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toneChips.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTone = btn.dataset.tone;
+    });
+  });
+
+  filesEl.addEventListener('change', async (e) => {
+    const files = [...e.target.files].filter(f => f.type.startsWith('image/'));
+    images = await Promise.all(files.map(loadImageMeta));
+    renderThumbs();
+    if (images.length) generateRecommendation();
+  });
+
+  analyzeBtn.addEventListener('click', generateRecommendation);
+  shuffleBtn.addEventListener('click', () => {
+    seed++;
+    generateRecommendation(true);
+  });
+
+  function loadImageMeta(file){
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          file,
+          url,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          ratio: img.naturalWidth / img.naturalHeight,
+          orientation: img.naturalWidth > img.naturalHeight ? 'landscape' : (img.naturalWidth < img.naturalHeight ? 'portrait' : 'square')
+        });
+      };
+      img.src = url;
+    });
+  }
+
+  function renderThumbs(){
+    thumbsEl.innerHTML = '';
+    images.forEach((img, i) => {
+      const div = document.createElement('div');
+      div.className = 'thumb';
+      div.innerHTML = `<img src="${img.url}" alt="thumb ${i+1}"><span>${i+1}</span>`;
+      thumbsEl.appendChild(div);
+    });
+  }
+
+  function generateRecommendation(isShuffle=false){
+    if (!images.length) {
+      resultEl.textContent = '먼저 사진을 업로드해주세요.';
+      storyGrid.innerHTML = '';
+      storyCaption.textContent = '여기에 추천 멘트가 표시됩니다.';
+      return;
+    }
+
+    const ordered = rankImages(images, seed);
+    const layout = chooseLayout(ordered, layoutModeEl.value, seed);
+    const caption = createCaption(ordered, currentTone, keywordsEl.value, noteEl.value, captionModeEl.value, seed);
+    const guide = createGuide(ordered, layout, caption);
+
+    renderStory(layout, ordered);
+    storyCaption.textContent = caption.primary;
+    resultEl.textContent = guide;
+  }
+
+  function rankImages(arr, localSeed=0){
+    // 스토리 첫 장: 세로/정방형 + 균형 비율 사진 우선
+    const scored = arr.map((img, i) => {
+      let score = 0;
+      if (img.orientation === 'portrait') score += 30;
+      if (img.orientation === 'square') score += 18;
+      if (img.orientation === 'landscape') score += 8;
+      const closeness = 1 - Math.abs((img.ratio) - 0.75); // 9:16에 덜 어울려도 대략 세로 선호
+      score += closeness * 12;
+      score += ((i + localSeed) % 3) * 1.5;
+      return { ...img, score };
+    });
+
+    const sorted = scored.sort((a,b) => b.score - a.score);
+
+    // 1장 임팩트, 중간 디테일, 마지막 분위기 정리
+    const first = sorted[0];
+    const rest = sorted.slice(1);
+
+    const portraits = rest.filter(x => x.orientation === 'portrait');
+    const others = rest.filter(x => x.orientation !== 'portrait');
+
+    return [first, ...others, ...portraits];
+  }
+
+  function chooseLayout(ordered, mode, localSeed=0){
+    const n = Math.min(ordered.length, 4);
+    const effectiveMode = mode === 'auto'
+      ? autoLayoutMode(n, ordered, localSeed)
+      : mode;
+
+    const layouts = {
+      clean: {
+        1: { template: 'single', cols: '1fr', rows: '1fr', areas: ['1 / 1 / 2 / 2'] },
+        2: { template: 'split-v', cols: '1fr', rows: '1fr 1fr', areas: ['1 / 1 / 2 / 2', '2 / 1 / 3 / 2'] },
+        3: { template: 'hero-top', cols: '1fr 1fr', rows: '1.3fr 1fr', areas: ['1 / 1 / 2 / 3', '2 / 1 / 3 / 2', '2 / 2 / 3 / 3'] },
+        4: { template: 'grid', cols: '1fr 1fr', rows: '1fr 1fr', areas: ['1 / 1 / 2 / 2', '1 / 2 / 2 / 3', '2 / 1 / 3 / 2', '2 / 2 / 3 / 3'] }
+      },
+      dynamic: {
+        1: { template: 'single', cols: '1fr', rows: '1fr', areas: ['1 / 1 / 2 / 2'] },
+        2: { template: 'split-h', cols: '1fr 1fr', rows: '1fr', areas: ['1 / 1 / 2 / 2', '1 / 2 / 2 / 3'] },
+        3: { template: 'left-hero', cols: '1.2fr .8fr', rows: '1fr 1fr', areas: ['1 / 1 / 3 / 2', '1 / 2 / 2 / 3', '2 / 2 / 3 / 3'] },
+        4: { template: 'banner-grid', cols: '1fr 1fr', rows: '.9fr 1.1fr 1.1fr', areas: ['1 / 1 / 2 / 3', '2 / 1 / 3 / 2', '2 / 2 / 3 / 3', '3 / 1 / 4 / 3'] }
+      },
+      collage: {
+        1: { template: 'single', cols: '1fr', rows: '1fr', areas: ['1 / 1 / 2 / 2'] },
+        2: { template: 'story-collage-2', cols: '1.05fr .95fr', rows: '1fr', areas: ['1 / 1 / 2 / 2', '1 / 2 / 2 / 3'] },
+        3: { template: 'story-collage-3', cols: '1fr 1fr', rows: '1fr 1fr', areas: ['1 / 1 / 3 / 2', '1 / 2 / 2 / 3', '2 / 2 / 3 / 3'] },
+        4: { template: 'story-collage-4', cols: '1.1fr .9fr', rows: '1fr 1fr 1fr', areas: ['1 / 1 / 3 / 2', '1 / 2 / 2 / 3', '2 / 2 / 3 / 3', '3 / 1 / 4 / 3'] }
+      }
+    };
+
+    return {
+      mode: effectiveMode,
+      ...layouts[effectiveMode][n],
+      count: n
+    };
+  }
+
+  function autoLayoutMode(n, ordered, localSeed){
+    const portraitCount = ordered.filter(i => i.orientation === 'portrait').length;
+    const landscapeCount = ordered.filter(i => i.orientation === 'landscape').length;
+    if (n === 1) return 'clean';
+    if (portraitCount >= landscapeCount + 1) return 'clean';
+    if (landscapeCount >= 2) return (localSeed % 2 === 0 ? 'dynamic' : 'collage');
+    return 'dynamic';
+  }
+
+  function renderStory(layout, ordered){
+    storyGrid.innerHTML = '';
+    storyGrid.style.gridTemplateColumns = layout.cols;
+    storyGrid.style.gridTemplateRows = layout.rows;
+
+    for (let i = 0; i < layout.count; i++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.style.gridArea = layout.areas[i];
+
+      if (ordered[i]) {
+        cell.innerHTML = `<img src="${ordered[i].url}" alt="story image ${i+1}" />`;
+      } else {
+        cell.innerHTML = `<div class="empty">빈 칸</div>`;
+      }
+      storyGrid.appendChild(cell);
+    }
+  }
+
+  function createCaption(ordered, tone, keywords, note, mode, localSeed=0){
+    const keywordText = keywords.trim();
+    const noteText = note.trim();
+    const mix = `${keywordText} ${noteText}`.trim();
+
+    const baseByTone = {
+      감성: [
+        '이 순간은 오래 남겨두고 싶다',
+        '요즘의 마음을 그대로',
+        '그날의 공기까지 같이 저장',
+        '천천히 지나간 하루'
+      ],
+      일상: [
+        '별거 없는데 괜히 좋았던 하루',
+        '그냥 이런 날도 좋지',
+        '소소했는데 꽤 마음에 들었던 순간',
+        '요즘 일상 모음'
+      ],
+      여행: [
+        '이래서 또 떠나고 싶다',
+        '사진 정리하다가 다시 가고 싶어짐',
+        '잠깐이었는데 오래 기억날 곳',
+        '여행은 끝났는데 기분은 아직 거기'
+      ],
+      맛집: [
+        '잘 먹은 날은 다시 꺼내보게 된다',
+        '사진 보니까 또 배고파짐',
+        '이건 기록해야 해',
+        '먹는 순간까지 완벽'
+      ],
+      친구: [
+        '같이 있어서 더 좋았던 날',
+        '웃긴데 또 괜히 소중함',
+        '사진만 봐도 시끄럽다',
+        '이 조합, 늘 옳음'
+      ],
+      기록: [
+        '기억하려고 남기는 장면들',
+        '지나가면 더 또렷해질 순간',
+        '요즘의 기록',
+        '한 장씩 모아두는 중'
+      ]
+    };
+
+    const styleAdjust = {
+      auto: '',
+      short: '',
+      mood: ' ✦',
+      fun: ' ㅋㅋ'
+    };
+
+    const alternatives = [...baseByTone[tone]];
+
+    if (mix) {
+      alternatives.unshift(makeKeywordCaption(mix, tone, mode));
+    }
+
+    if (mode === 'fun') {
+      alternatives.push('이 정도면 올려야지 ㅋㅋ');
+      alternatives.push('사진첩에만 두기 아까워서');
+    } else if (mode === 'mood') {
+      alternatives.push('설명보다 분위기가 더 잘 말해주는 날');
+      alternatives.push('말보다 사진이 더 정확한 순간');
+    } else if (mode === 'short') {
+      alternatives.push('좋았다');
+      alternatives.push('완전 만족');
+    }
+
+    const idx = localSeed % alternatives.length;
+    const primary = alternatives[idx] + (styleAdjust[mode] || '');
+
+    return {
+      primary,
+      options: shuffle(alternatives, localSeed).slice(0,4)
+    };
+  }
+
+  function makeKeywordCaption(text, tone, mode){
+    const cleaned = text.replace(/\s+/g, ' ').trim();
+    const templates = {
+      감성: `${cleaned} — 그 분위기 그대로`,
+      일상: `${cleaned}, 요즘 잘 지내는 증거`,
+      여행: `${cleaned} 다녀온 기록`,
+      맛집: `${cleaned} 성공적`,
+      친구: `${cleaned}, 같이여서 더 좋았음`,
+      기록: `${cleaned} 저장 완료`
+    };
+    let out = templates[tone] || `${cleaned}`;
+    if (mode === 'fun') out += ' ㅋㅋ';
+    return out;
+  }
+
+  function createGuide(ordered, layout, caption){
+    const orderText = ordered.slice(0, layout.count).map((img, idx) => {
+      const ori = img.orientation === 'portrait' ? '세로' : img.orientation === 'landscape' ? '가로' : '정방형';
+      const role = idx === 0 ? '대표컷' : (idx === layout.count - 1 ? '마무리컷' : '보조컷');
+      return `${idx+1}번 사진 → ${role} (${ori})`;
+    }).join('\n');
+
+    const layoutText = {
+      single:'사진 1장을 크게 꽉 차게 보여주는 방식',
+      'split-v':'위아래 2분할 방식',
+      'split-h':'좌우 2분할 방식',
+      'hero-top':'상단 대표컷 + 하단 2장 보조컷',
+      'grid':'2x2 균형형 그리드',
+      'left-hero':'왼쪽 대표컷 + 오른쪽 세로 2장',
+      'banner-grid':'상단/하단 리듬감 있는 다이내믹 배치',
+      'story-collage-2':'서로 다른 비율을 살리는 2장 콜라주',
+      'story-collage-3':'한 장 강조 + 두 장 디테일 컷',
+      'story-collage-4':'메인 컷 중심의 4장 콜라주'
+    }[layout.template];
+
+    return [
+      `추천 배치: ${layout.mode.toUpperCase()} / ${layoutText}`,
+      ``,
+      `[업로드 순서 추천]`,
+      orderText,
+      ``,
+      `[대표 멘트 추천]`,
+      caption.primary,
+      ``,
+      `[다른 멘트 후보]`,
+      ...caption.options.map((x,i) => `${i+1}. ${x}`),
+      ``,
+      `[올리는 팁]`,
+      `- 첫 장은 가장 시선 끄는 컷`,
+      `- 같은 구도의 사진이 많으면 2~4장만 추려서 올리기`,
+      `- 텍스트는 너무 길지 않게 1줄~2줄 권장`
+    ].join('\n');
+  }
+
+  function shuffle(arr, localSeed=0){
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(random(localSeed + i) * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function random(x){
+    const s = Math.sin(x * 999 + 7) * 10000;
+    return s - Math.floor(s);
+  }
+})();
+</script>
+</body>
+</html>
