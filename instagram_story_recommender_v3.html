@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>인스타 스토리 레이아웃 추천기 v3</title>
+  <style>
+    :root{
+      --bg:#0c0f14;
+      --panel:#151922;
+      --soft:#1d2330;
+      --line:#2d3546;
+      --text:#f3f5f8;
+      --muted:#b8c1d1;
+      --accent:#91b7ff;
+      --accent2:#a8f0d1;
+      --shadow:0 16px 42px rgba(0,0,0,.34);
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(145,183,255,.14), transparent 30%),
+        radial-gradient(circle at top right, rgba(168,240,209,.10), transparent 26%),
+        linear-gradient(180deg,#0b0e13,#0f141d 35%,#0a0d12);
+    }
+    .wrap{
+      width:min(1360px, calc(100% - 28px));
+      margin:18px auto 34px;
+      display:grid;
+      grid-template-columns: 430px 1fr;
+      gap:18px;
+    }
+    .card{
+      background:rgba(21,25,34,.92);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .panel{padding:18px}
+    h1{font-size:24px;margin:0 0 8px}
+    .sub{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:16px}
+    h2{font-size:15px;margin:16px 0 10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px}
+    input[type="file"], textarea, select, button, input[type="text"]{
+      width:100%;
+      border:none;
+      border-radius:14px;
+      background:var(--soft);
+      color:var(--text);
+      padding:12px 14px;
+      outline:none;
+      border:1px solid transparent;
+      transition:.18s ease;
+      font-size:14px;
+    }
+    textarea{min-height:82px;resize:vertical;line-height:1.52}
+    input[type="file"]:focus, textarea:focus, select:focus, input[type="text"]:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 4px rgba(145,183,255,.12);
+    }
+    .thumbs,.bg-picks{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .thumb, .bg-thumb{
+      width:70px;height:70px;border-radius:12px;overflow:hidden;position:relative;
+      background:#0e1117;border:1px solid rgba(255,255,255,.08)
+    }
+    .thumb img,.bg-thumb img{width:100%;height:100%;object-fit:cover}
+    .thumb span,.bg-thumb span{
+      position:absolute;left:6px;bottom:6px;
+      font-size:11px;padding:2px 6px;border-radius:999px;
+      background:rgba(0,0,0,.6)
+    }
+    .bg-thumb{
+      cursor:pointer;
+      width:76px;height:76px;
+    }
+    .bg-thumb.active{
+      outline:3px solid rgba(145,183,255,.8);
+      outline-offset:2px;
+    }
+    .bg-thumb.none{
+      display:flex;align-items:center;justify-content:center;
+      color:#dbe7ff;background:linear-gradient(180deg,#233048,#18202e);
+      font-size:12px;text-align:center;padding:8px;
+    }
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+    button{
+      cursor:pointer;
+      font-weight:700;
+      background:linear-gradient(135deg, rgba(145,183,255,.18), rgba(168,240,209,.14));
+      border:1px solid rgba(145,183,255,.24);
+    }
+    button:hover{transform:translateY(-1px)}
+    button.secondary{
+      background:var(--soft);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{
+      width:auto;
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      background:#202634;
+      border:1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+    }
+    .chip.active{
+      background:rgba(145,183,255,.16);
+      border-color:rgba(145,183,255,.56);
+    }
+    .section-note,.footer-tip{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+    }
+    .result{
+      margin-top:10px;
+      background:#10141d;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px 14px;
+      white-space:pre-wrap;
+      font-size:14px;
+      line-height:1.62;
+      color:#e7edf8;
+    }
+
+    .stage-wrap{
+      padding:18px;
+      display:grid;
+      grid-template-columns:minmax(320px, 460px) 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    .story-shell{width:100%}
+    .story{
+      width:100%;
+      aspect-ratio:9 / 16;
+      position:relative;
+      overflow:hidden;
+      border-radius:28px;
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:var(--shadow);
+      background:#121722;
+      isolation:isolate;
+    }
+    .story-bg{
+      position:absolute; inset:0;
+      background:linear-gradient(180deg,#1f2430,#151922);
+      z-index:0;
+    }
+    .story-bg img{
+      width:100%; height:100%;
+      object-fit:cover;
+      filter:brightness(.78) saturate(.98) blur(0px);
+      transform:scale(1.03);
+    }
+    .story-bg.overlay::after{
+      content:"";
+      position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.36));
+    }
+    .story-layer{
+      position:absolute;
+      box-shadow:0 10px 26px rgba(0,0,0,.28);
+      z-index:2;
+      overflow:hidden;
+      border:2px solid rgba(255,255,255,.88);
+      background:#1d2330;
+    }
+    .story-layer img{
+      width:100%;height:100%;display:block;object-fit:cover;
+    }
+    .polaroid{
+      padding:10px 10px 22px;
+      background:#fff;
+      border:0;
+      box-shadow:0 14px 30px rgba(0,0,0,.32);
+    }
+    .soft{
+      border-radius:26px;
+      border-color:rgba(255,255,255,.75);
+    }
+    .square{
+      border-radius:18px;
+    }
+    .circle{
+      border-radius:999px;
+      border-color:rgba(255,255,255,.9);
+    }
+    .blob{
+      border-radius:38% 62% 50% 50% / 45% 42% 58% 55%;
+      border-color:rgba(255,255,255,.86);
+    }
+    .caption-pill{
+      position:absolute;
+      left:20px; right:20px; bottom:20px;
+      z-index:4;
+      background:rgba(0,0,0,.42);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:13px 16px;
+      line-height:1.48;
+      font-size:16px;
+      backdrop-filter: blur(8px);
+      white-space:pre-wrap;
+    }
+    .caption-floating{
+      position:absolute;
+      left:18px; right:auto; bottom:24px;
+      z-index:4;
+      max-width:70%;
+      background:rgba(255,255,255,.92);
+      color:#171b24;
+      border-radius:18px 18px 18px 6px;
+      padding:10px 14px;
+      line-height:1.45;
+      font-size:15px;
+      box-shadow:0 8px 20px rgba(0,0,0,.18);
+      white-space:pre-wrap;
+    }
+    .caption-min{
+      position:absolute;
+      top:18px; left:18px;
+      z-index:4;
+      font-size:15px;
+      font-weight:700;
+      text-shadow:0 2px 14px rgba(0,0,0,.48);
+      white-space:pre-wrap;
+    }
+    .inspect{
+      background:#10141d;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      padding:14px;
+    }
+    .preview-title{font-size:14px;font-weight:700;margin:0 0 10px}
+    .mini-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+      gap:10px;
+    }
+    .mini-card{
+      background:#171c27;
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:14px;
+      padding:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .mini-card strong{display:block;color:#fff;margin-bottom:4px;font-size:13px}
+    @media (max-width: 1080px){
+      .wrap{grid-template-columns:1fr}
+      .stage-wrap{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="panel">
+        <h1>인스타 스토리 레이아웃 추천기</h1>
+        <div class="sub">
+          배경 사진도 직접 고를 수 있고, 완성된 스토리를 PNG 이미지로 바로 다운로드할 수 있습니다.
+        </div>
+
+        <h2>1) 사진 업로드</h2>
+        <label for="files">사진 여러 장 선택</label>
+        <input id="files" type="file" accept="image/*" multiple />
+        <div id="thumbs" class="thumbs"></div>
+
+        <h2>2) 분위기</h2>
+        <div id="toneChips" class="chips">
+          <button class="chip active" data-tone="감성">감성</button>
+          <button class="chip" data-tone="일상">일상</button>
+          <button class="chip" data-tone="여행">여행</button>
+          <button class="chip" data-tone="맛집">맛집</button>
+          <button class="chip" data-tone="친구">친구</button>
+          <button class="chip" data-tone="기록">기록</button>
+        </div>
+
+        <h2>3) 설명</h2>
+        <label for="keywords">키워드 / 상황</label>
+        <input id="keywords" type="text" placeholder="예: 부산 여행, 바다, 노을, 친구들" />
+        <label for="note" style="margin-top:10px;">추가 메모</label>
+        <textarea id="note" placeholder="예: 배경샷 하나 깔고 셀카를 작게 올리고 싶음"></textarea>
+
+        <div class="row3" style="margin-top:10px;">
+          <div>
+            <label for="layoutMode">레이아웃</label>
+            <select id="layoutMode">
+              <option value="auto">자동 추천</option>
+              <option value="background">배경 사진형</option>
+              <option value="floating">배경색 + 작은 사진형</option>
+              <option value="stack">겹쳐놓기형</option>
+              <option value="magazine">매거진형</option>
+            </select>
+          </div>
+          <div>
+            <label for="shapeMode">사진 모양</label>
+            <select id="shapeMode">
+              <option value="auto">자동 추천</option>
+              <option value="soft">둥근 사각형</option>
+              <option value="circle">원형</option>
+              <option value="blob">유기적 모양</option>
+              <option value="polaroid">폴라로이드</option>
+              <option value="mix">섞기</option>
+            </select>
+          </div>
+          <div>
+            <label for="captionMode">멘트 스타일</label>
+            <select id="captionMode">
+              <option value="auto">자동 추천</option>
+              <option value="short">짧게</option>
+              <option value="mood">감성 있게</option>
+              <option value="fun">가볍게</option>
+            </select>
+          </div>
+        </div>
+
+        <h2>4) 배경 사진 직접 선택</h2>
+        <div id="bgPicks" class="bg-picks"></div>
+        <div class="section-note" style="margin-top:8px;">
+          “배경색만”을 고르면 배경 사진 없이 컬러 바탕만 사용합니다.
+        </div>
+
+        <div class="btns">
+          <button id="analyzeBtn">다시 추천하기</button>
+          <button id="shuffleBtn" class="secondary">다른 시안 보기</button>
+          <button id="downloadBtn" class="secondary">PNG 다운로드</button>
+        </div>
+
+        <div class="section-note" style="margin-top:10px;">
+          다운로드는 1080×1920 스토리 비율로 저장됩니다.
+        </div>
+
+        <h2>추천 결과</h2>
+        <div id="result" class="result">사진을 넣으면 스토리 시안을 만들어드립니다.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stage-wrap">
+        <div class="story-shell">
+          <div class="story" id="story">
+            <div id="storyBg" class="story-bg"></div>
+            <div id="storyLayers"></div>
+            <div id="storyCaption" class="caption-pill">여기에 추천 멘트가 표시됩니다.</div>
+          </div>
+          <div class="section-note" style="padding:12px 4px 0;">
+            미리보기는 9:16 비율입니다. 다운로드 버튼을 누르면 그대로 이미지로 저장됩니다.
+          </div>
+        </div>
+
+        <div class="inspect">
+          <p class="preview-title">이번 시안의 구성 설명</p>
+          <div id="miniInfo" class="mini-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const filesEl = document.getElementById('files');
+  const thumbsEl = document.getElementById('thumbs');
+  const bgPicksEl = document.getElementById('bgPicks');
+  const resultEl = document.getElementById('result');
+  const storyBg = document.getElementById('storyBg');
+  const storyLayers = document.getElementById('storyLayers');
+  const storyCaption = document.getElementById('storyCaption');
+  const miniInfo = document.getElementById('miniInfo');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const keywordsEl = document.getElementById('keywords');
+  const noteEl = document.getElementById('note');
+  const layoutModeEl = document.getElementById('layoutMode');
+  const shapeModeEl = document.getElementById('shapeMode');
+  const captionModeEl = document.getElementById('captionMode');
+  const toneChips = [...document.querySelectorAll('#toneChips .chip')];
+
+  let images = [];
+  let currentTone = '감성';
+  let seed = 0;
+  let userBackgroundId = '__auto__';
+  let currentScene = null;
+  let currentCaption = null;
+
+  toneChips.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toneChips.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTone = btn.dataset.tone;
+      if (images.length) generateRecommendation();
+    });
+  });
+
+  filesEl.addEventListener('change', async (e) => {
+    const files = [...e.target.files].filter(f => f.type.startsWith('image/'));
+    images = await Promise.all(files.map((f, i) => loadImageMeta(f, i)));
+    userBackgroundId = '__auto__';
+    renderThumbs();
+    renderBackgroundChoices();
+    generateRecommendation();
+  });
+
+  analyzeBtn.addEventListener('click', () => generateRecommendation());
+  shuffleBtn.addEventListener('click', () => {
+    seed++;
+    generateRecommendation(true);
+  });
+  downloadBtn.addEventListener('click', downloadStoryImage);
+
+  function loadImageMeta(file, i){
+    return new Promise(resolve => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          id: 'img_' + i,
+          file, url,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          ratio: img.naturalWidth / img.naturalHeight,
+          orientation: img.naturalWidth > img.naturalHeight ? 'landscape' : (img.naturalWidth < img.naturalHeight ? 'portrait' : 'square')
+        });
+      };
+      img.src = url;
+    });
+  }
+
+  function renderThumbs(){
+    thumbsEl.innerHTML = '';
+    images.forEach((img, i) => {
+      const div = document.createElement('div');
+      div.className = 'thumb';
+      div.innerHTML = `<img src="${img.url}" alt=""><span>${i+1}</span>`;
+      thumbsEl.appendChild(div);
+    });
+  }
+
+  function renderBackgroundChoices(){
+    bgPicksEl.innerHTML = '';
+
+    const auto = document.createElement('div');
+    auto.className = 'bg-thumb none' + (userBackgroundId === '__auto__' ? ' active' : '');
+    auto.innerHTML = `<span>자동</span>`;
+    auto.addEventListener('click', () => {
+      userBackgroundId = '__auto__';
+      renderBackgroundChoices();
+      generateRecommendation();
+    });
+    bgPicksEl.appendChild(auto);
+
+    const none = document.createElement('div');
+    none.className = 'bg-thumb none' + (userBackgroundId === '__none__' ? ' active' : '');
+    none.innerHTML = `<span>배경색만</span>`;
+    none.addEventListener('click', () => {
+      userBackgroundId = '__none__';
+      renderBackgroundChoices();
+      generateRecommendation();
+    });
+    bgPicksEl.appendChild(none);
+
+    images.forEach((img, i) => {
+      const div = document.createElement('div');
+      div.className = 'bg-thumb' + (userBackgroundId === img.id ? ' active' : '');
+      div.innerHTML = `<img src="${img.url}" alt=""><span>${i+1}</span>`;
+      div.addEventListener('click', () => {
+        userBackgroundId = img.id;
+        renderBackgroundChoices();
+        generateRecommendation();
+      });
+      bgPicksEl.appendChild(div);
+    });
+  }
+
+  function generateRecommendation(){
+    if (!images.length){
+      resultEl.textContent = '먼저 사진을 업로드해주세요.';
+      storyBg.innerHTML = '';
+      storyLayers.innerHTML = '';
+      storyCaption.textContent = '여기에 추천 멘트가 표시됩니다.';
+      miniInfo.innerHTML = '';
+      currentScene = null;
+      return;
+    }
+
+    const ranked = rankImages(images, seed);
+    const scene = chooseScene(ranked, layoutModeEl.value, shapeModeEl.value, seed);
+    const caption = createCaption(currentTone, keywordsEl.value, noteEl.value, captionModeEl.value, seed);
+
+    currentScene = scene;
+    currentCaption = caption.primary;
+
+    renderScene(scene, caption.primary);
+    storyCaption.className = scene.captionClass;
+    storyCaption.textContent = caption.primary;
+    miniInfo.innerHTML = buildMiniInfo(scene);
+    resultEl.textContent = createGuide(scene, caption);
+  }
+
+  function rankImages(arr, localSeed){
+    return [...arr].sort((a,b) => scoreForBackground(b, localSeed) - scoreForBackground(a, localSeed));
+  }
+
+  function scoreForBackground(img, localSeed){
+    let score = 0;
+    if (img.orientation === 'landscape') score += 26;
+    if (img.orientation === 'portrait') score += 20;
+    if (img.orientation === 'square') score += 14;
+    score += (1 - Math.abs(img.ratio - 0.8)) * 12;
+    score += ((img.width + img.height + localSeed * 17) % 9);
+    return score;
+  }
+
+  function chooseScene(ranked, layoutMode, shapeMode, localSeed){
+    const effectiveLayout = layoutMode === 'auto'
+      ? autoLayout(ranked, localSeed)
+      : layoutMode;
+
+    const backgroundCandidate = pickBackground(ranked);
+    const bgColor = pickBgColor(currentTone, localSeed);
+
+    let scene;
+    if (effectiveLayout === 'background'){
+      scene = buildBackgroundScene(backgroundCandidate, ranked, shapeMode, bgColor, localSeed);
+    } else if (effectiveLayout === 'floating'){
+      scene = buildFloatingScene(ranked, shapeMode, bgColor, localSeed);
+    } else if (effectiveLayout === 'stack'){
+      scene = buildStackScene(backgroundCandidate, ranked, shapeMode, bgColor, localSeed);
+    } else {
+      scene = buildMagazineScene(backgroundCandidate, ranked, shapeMode, bgColor, localSeed);
+    }
+
+    scene.bgColor = bgColor;
+    return scene;
+  }
+
+  function autoLayout(ranked, localSeed){
+    const portraits = ranked.filter(x => x.orientation === 'portrait').length;
+    const landscapes = ranked.filter(x => x.orientation === 'landscape').length;
+    const n = ranked.length;
+    if (n === 1) return 'floating';
+    if (userBackgroundId !== '__none__' && (userBackgroundId !== '__auto__' || landscapes >= 1) && n >= 2 && localSeed % 2 === 0) return 'background';
+    if (portraits >= 2) return 'stack';
+    return ['floating','background','magazine'][localSeed % 3];
+  }
+
+  function pickBackground(ranked){
+    if (userBackgroundId === '__none__') return null;
+    if (userBackgroundId !== '__auto__'){
+      const found = images.find(x => x.id === userBackgroundId);
+      return found || ranked[0];
+    }
+    return [...ranked].sort((a,b) => {
+      let sa = 0, sb = 0;
+      if (a.orientation === 'landscape') sa += 16;
+      if (b.orientation === 'landscape') sb += 16;
+      if (a.orientation === 'portrait') sa += 12;
+      if (b.orientation === 'portrait') sb += 12;
+      sa += (1 - Math.abs(a.ratio - 0.8)) * 10;
+      sb += (1 - Math.abs(b.ratio - 0.8)) * 10;
+      return sb - sa;
+    })[0];
+  }
+
+  function overlayPool(ranked, backgroundCandidate){
+    if (!backgroundCandidate) return ranked;
+    return ranked.filter(x => x.id !== backgroundCandidate.id);
+  }
+
+  function buildBackgroundScene(bg, ranked, shapeMode, bgColor, localSeed){
+    const overlays = overlayPool(ranked, bg);
+    const picked = overlays.slice(0, Math.min(overlays.length, 3));
+    const layoutPresets = [
+      [
+        {x: 8, y: 58, w: 30, h: 22, rot: -5},
+        {x: 58, y: 18, w: 26, h: 20, rot: 6},
+        {x: 52, y: 64, w: 32, h: 22, rot: -3}
+      ],
+      [
+        {x: 11, y: 14, w: 30, h: 22, rot: -6},
+        {x: 56, y: 56, w: 28, h: 20, rot: 5},
+        {x: 19, y: 69, w: 24, h: 17, rot: 2}
+      ]
+    ][localSeed % 2];
+
+    return {
+      type:'배경 사진형',
+      template:'큰 배경 사진 위에 포인트 사진을 얹는 구조',
+      background: bg ? { kind:'image', image:bg, overlay:true } : { kind:'color', color:bgColor },
+      captionClass: localSeed % 2 === 0 ? 'caption-floating' : 'caption-pill',
+      layers:picked.map((img, i) => ({
+        image: img,
+        ...layoutPresets[i],
+        shape: resolveShape(shapeMode, i, localSeed, ['polaroid','soft','circle','blob'])
+      }))
+    };
+  }
+
+  function buildFloatingScene(ranked, shapeMode, bgColor, localSeed){
+    const overlays = userBackgroundId !== '__none__' && userBackgroundId !== '__auto__'
+      ? overlayPool(ranked, images.find(x => x.id === userBackgroundId))
+      : ranked;
+    const picked = overlays.slice(0, Math.min(overlays.length, 4));
+    const layoutPresets = [
+      [
+        {x: 10, y: 16, w: 34, h: 23, rot: -5},
+        {x: 53, y: 22, w: 28, h: 19, rot: 4},
+        {x: 16, y: 50, w: 30, h: 20, rot: 3},
+        {x: 48, y: 62, w: 34, h: 22, rot: -4}
+      ],
+      [
+        {x: 13, y: 12, w: 28, h: 19, rot: -6},
+        {x: 44, y: 17, w: 38, h: 25, rot: 2},
+        {x: 19, y: 45, w: 25, h: 17, rot: 7},
+        {x: 41, y: 58, w: 30, h: 20, rot: -7}
+      ]
+    ][localSeed % 2];
+
+    return {
+      type:'배경색 + 작은 사진형',
+      template:'여백 있는 컬러 배경 위에 사진들을 스티커처럼 배치',
+      background:{ kind:'color', color:bgColor },
+      captionClass:'caption-min',
+      layers:picked.map((img, i) => ({
+        image: img,
+        ...layoutPresets[i],
+        shape: resolveShape(shapeMode, i, localSeed, ['soft','circle','blob','polaroid'])
+      }))
+    };
+  }
+
+  function buildStackScene(bg, ranked, shapeMode, bgColor, localSeed){
+    const pool = (bg ? [bg, ...overlayPool(ranked, bg)] : ranked).slice(0, Math.min(3, ranked.length));
+    const layoutPresets = [
+      {x: 11, y: 14, w: 52, h: 35, rot: -6},
+      {x: 33, y: 34, w: 46, h: 30, rot: 4},
+      {x: 18, y: 58, w: 40, h: 24, rot: -2}
+    ];
+
+    return {
+      type:'겹쳐놓기형',
+      template:'사진을 여러 장 포개서 다이어리처럼 보이게 하는 구조',
+      background:{ kind:'color', color:bgColor },
+      captionClass:'caption-floating',
+      layers:pool.map((img, i) => ({
+        image: img,
+        ...layoutPresets[i],
+        shape: resolveShape(shapeMode, i, localSeed, ['polaroid','soft','soft','blob'])
+      }))
+    };
+  }
+
+  function buildMagazineScene(bg, ranked, shapeMode, bgColor, localSeed){
+    const list = bg ? [bg, ...overlayPool(ranked, bg)] : ranked;
+    const first = list[0];
+    const rest = list.slice(1, 3);
+    const layers = [
+      {image:first, x:8, y:10, w:84, h:46, rot:0, shape:resolveShape(shapeMode, 0, localSeed, ['soft','square'])}
+    ];
+    const lower = [
+      {x:10, y:61, w:34, h:20, rot:0},
+      {x:49, y:61, w:34, h:20, rot:0}
+    ];
+    rest.forEach((img, i) => layers.push({
+      image: img, ...lower[i], shape: resolveShape(shapeMode, i+1, localSeed, ['circle','blob','soft'])
+    }));
+
+    return {
+      type:'매거진형',
+      template:'상단 큰 컷 + 하단 포인트 컷으로 리듬감 있게 구성',
+      background:{ kind:'color', color:bgColor },
+      captionClass:'caption-pill',
+      layers
+    };
+  }
+
+  function resolveShape(mode, index, localSeed, autoList){
+    if (mode === 'auto') return autoList[(index + localSeed) % autoList.length];
+    if (mode === 'mix') return autoList[(index + localSeed) % autoList.length];
+    return mode;
+  }
+
+  function pickBgColor(tone, localSeed){
+    const palettes = {
+      감성:['linear-gradient(180deg,#7b7f8d,#454b5a)', 'linear-gradient(180deg,#cab5aa,#8e6f6b)', 'linear-gradient(180deg,#7f93a8,#485364)'],
+      일상:['linear-gradient(180deg,#b8c5d4,#728297)', 'linear-gradient(180deg,#d8d2c7,#998f83)', 'linear-gradient(180deg,#c7d6ca,#6c8375)'],
+      여행:['linear-gradient(180deg,#9fc8dd,#4b7d97)', 'linear-gradient(180deg,#f0cfae,#cb8b57)', 'linear-gradient(180deg,#9bc7bd,#4c756d)'],
+      맛집:['linear-gradient(180deg,#f0d7b2,#b17446)', 'linear-gradient(180deg,#d8c1b4,#8d6555)', 'linear-gradient(180deg,#e4d0a8,#8c7751)'],
+      친구:['linear-gradient(180deg,#d0b4cb,#8a6c9a)', 'linear-gradient(180deg,#adc6e6,#667da0)', 'linear-gradient(180deg,#f0c4bd,#bf7c76)'],
+      기록:['linear-gradient(180deg,#cfcfc7,#7b8076)', 'linear-gradient(180deg,#b8c0b9,#66706a)', 'linear-gradient(180deg,#c3c9d5,#71798a)']
+    };
+    const list = palettes[tone] || palettes['감성'];
+    return list[localSeed % list.length];
+  }
+
+  function renderScene(scene){
+    storyBg.className = 'story-bg';
+    storyBg.innerHTML = '';
+    storyBg.style.background = scene.background.kind === 'color' ? scene.background.color : '#111620';
+
+    if (scene.background.kind === 'image'){
+      storyBg.classList.add('overlay');
+      storyBg.innerHTML = `<img src="${scene.background.image.url}" alt="">`;
+    }
+
+    storyLayers.innerHTML = '';
+    scene.layers.forEach((layer, index) => {
+      const el = document.createElement('div');
+      const shapeClass = shapeClassName(layer.shape);
+      el.className = `story-layer ${shapeClass}`;
+      el.style.left = layer.x + '%';
+      el.style.top = layer.y + '%';
+      el.style.width = layer.w + '%';
+      el.style.height = layer.h + '%';
+      el.style.transform = `rotate(${layer.rot}deg)`;
+      el.style.zIndex = String(index + 2);
+      el.innerHTML = `<img src="${layer.image.url}" alt="">`;
+      storyLayers.appendChild(el);
+    });
+  }
+
+  function shapeClassName(shape){
+    return ({
+      soft:'soft',
+      circle:'circle',
+      blob:'blob',
+      polaroid:'polaroid',
+      square:'square'
+    })[shape] || 'soft';
+  }
+
+  function createCaption(tone, keywords, note, mode, localSeed){
+    const text = `${keywords.trim()} ${note.trim()}`.trim();
+    const base = {
+      감성:['그날의 공기까지 같이 남겨두기','사진으로 다시 꺼내보는 순간','이 장면은 작게 올려도 분위기가 다 한다'],
+      일상:['별거 아닌데 꽤 좋았던 하루','이런 조합이 딱 요즘 취향','소소한데 그래서 더 자주 꺼내보게 됨'],
+      여행:['한 장은 배경으로, 나머지는 기억용으로','여행 사진은 이렇게 쌓아 올리는 맛','다녀왔는데 기분은 아직 거기'],
+      맛집:['메뉴보다 분위기가 먼저 떠오르는 곳','먹은 것도 좋았지만 사진도 잘 나왔음','이건 그냥 기록해둬야 함'],
+      친구:['배경도 좋고 우리도 좋았던 날','같이 있으면 사진도 더 재밌다','한 장으로 안 끝나서 여러 장 올리는 중'],
+      기록:['이렇게 남겨두면 나중에 더 좋다','한 장은 분위기, 한 장은 디테일','요즘의 순간들을 모아두는 방식']
+    }[tone];
+
+    let candidates = [...base];
+    if (text){
+      candidates.unshift(makeKeywordCaption(text, tone, mode));
+    }
+    if (mode === 'fun'){
+      candidates.push('사진첩에만 두기 아까워서 올림 ㅋㅋ');
+      candidates.push('배경 하나 깔고 포인트만 툭');
+    } else if (mode === 'mood'){
+      candidates.push('말보다 구성이 더 잘 설명해주는 날');
+      candidates.push('장면을 잘라 붙이듯 남겨두기');
+    } else if (mode === 'short'){
+      candidates.push('좋았다');
+      candidates.push('이걸로 충분');
+    }
+
+    return {
+      primary: candidates[localSeed % candidates.length],
+      options: shuffle(candidates, localSeed).slice(0,4)
+    };
+  }
+
+  function makeKeywordCaption(text, tone, mode){
+    const cleaned = text.replace(/\s+/g, ' ').trim();
+    let line = ({
+      감성:`${cleaned} — 분위기까지 저장`,
+      일상:`${cleaned}, 그냥 좋았던 하루`,
+      여행:`${cleaned} 다녀온 흔적`,
+      맛집:`${cleaned}, 성공적`,
+      친구:`${cleaned}, 같이여서 더 좋았음`,
+      기록:`${cleaned} 기록 완료`
+    })[tone] || cleaned;
+    if (mode === 'fun') line += ' ㅋㅋ';
+    return line;
+  }
+
+  function buildMiniInfo(scene){
+    const entries = [
+      ['레이아웃', scene.type],
+      ['구성 방식', scene.template],
+      ['배경', scene.background.kind === 'image' ? '배경 사진 사용' : '배경색 사용'],
+      ['사진 수', `${scene.layers.length}장 사용`]
+    ];
+    return entries.map(([k,v]) => `<div class="mini-card"><strong>${k}</strong>${v}</div>`).join('');
+  }
+
+  function createGuide(scene, caption){
+    const layerGuide = scene.layers.map((layer, i) => {
+      const role = i === 0 ? '메인 요소' : `포인트 컷 ${i}`;
+      return `${i+1}번 사용 사진 → ${role} / ${shapeLabel(layer.shape)} / 화면 ${Math.round(layer.x)}%, ${Math.round(layer.y)}% 위치`;
+    }).join('\n');
+
+    return [
+      `추천 레이아웃: ${scene.type}`,
+      `설명: ${scene.template}`,
+      ``,
+      `[배치 가이드]`,
+      `- ${scene.background.kind === 'image' ? '선택된 사진을 전체 배경으로 사용' : '배경색을 먼저 깔고 사진들을 작게 띄워 배치'}`,
+      layerGuide,
+      ``,
+      `[대표 멘트 추천]`,
+      caption.primary,
+      ``,
+      `[다른 멘트 후보]`,
+      ...caption.options.map((x,i) => `${i+1}. ${x}`),
+      ``,
+      `[사용 팁]`,
+      `- 배경 사진을 직접 바꾸면서 제일 덜 복잡한 컷을 찾으면 결과가 좋아짐`,
+      `- 포인트 컷은 2~3장만 쓰는 게 제일 깔끔함`,
+      `- 다운로드한 PNG를 그대로 스토리에 올리면 됨`
+    ].join('\n');
+  }
+
+  function shapeLabel(shape){
+    return ({
+      soft:'둥근 사각형',
+      circle:'원형',
+      blob:'유기적 크롭',
+      polaroid:'폴라로이드',
+      square:'사각형'
+    })[shape] || shape;
+  }
+
+  function shuffle(arr, localSeed){
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(random(localSeed + i) * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function random(x){
+    const s = Math.sin((x + 1) * 987.123) * 10000;
+    return s - Math.floor(s);
+  }
+
+  async function downloadStoryImage(){
+    if (!currentScene) {
+      alert('먼저 시안을 만들어주세요.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext('2d');
+
+    drawBackground(ctx, canvas.width, canvas.height, currentScene.background);
+
+    if (currentScene.background.kind === 'image') {
+      // dark overlay
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, 'rgba(0,0,0,0.14)');
+      grad.addColorStop(1, 'rgba(0,0,0,0.36)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
+    for (let i = 0; i < currentScene.layers.length; i++) {
+      await drawLayer(ctx, currentScene.layers[i], canvas.width, canvas.height);
+    }
+
+    drawCaption(ctx, currentCaption || '', currentScene.captionClass, canvas.width, canvas.height);
+
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'instagram-story-layout.png';
+    a.click();
+  }
+
+  function drawBackground(ctx, w, h, background){
+    if (background.kind === 'color'){
+      const g = parseGradient(ctx, background.color, w, h);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+    } else {
+      const img = new Image();
+      img.src = background.image.url;
+      drawCoverImage(ctx, img, 0, 0, w, h, 1.03, 0.78);
+    }
+  }
+
+  function parseGradient(ctx, value, w, h){
+    const m = value.match(/linear-gradient\(180deg,\s*([^,]+),\s*([^)]+)\)/);
+    const c1 = (m && m[1]) ? m[1].trim() : '#7b7f8d';
+    const c2 = (m && m[2]) ? m[2].trim() : '#454b5a';
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, c1);
+    g.addColorStop(1, c2);
+    return g;
+  }
+
+  async function drawLayer(ctx, layer, cw, ch){
+    const x = cw * layer.x / 100;
+    const y = ch * layer.y / 100;
+    const w = cw * layer.w / 100;
+    const h = ch * layer.h / 100;
+    const rad = layer.rot * Math.PI / 180;
+
+    const img = await loadImage(layer.image.url);
+
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    ctx.rotate(rad);
+
+    drawShadow(ctx, w, h);
+
+    if (layer.shape === 'polaroid'){
+      const pad = Math.max(18, w * 0.045);
+      const bottomPad = pad * 2.1;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, -w/2, -h/2, w, h, 4);
+      ctx.fill();
+      const ix = -w/2 + pad;
+      const iy = -h/2 + pad;
+      const iw = w - pad*2;
+      const ih = h - pad - bottomPad;
+      clipRoundRect(ctx, ix, iy, iw, ih, 2);
+      ctx.drawImage(img, ...coverRect(img, ix, iy, iw, ih));
+      ctx.restore();
+      return;
+    }
+
+    // white border
+    const border = Math.max(8, Math.min(w, h) * 0.03);
+    const ix = -w/2 + border;
+    const iy = -h/2 + border;
+    const iw = w - border*2;
+    const ih = h - border*2;
+
+    drawShapeFill(ctx, layer.shape, -w/2, -h/2, w, h, '#ffffff');
+    clipShape(ctx, layer.shape, ix, iy, iw, ih);
+    ctx.drawImage(img, ...coverRect(img, ix, iy, iw, ih));
+    ctx.restore();
+  }
+
+  function drawShadow(ctx, w, h){
+    ctx.shadowColor = 'rgba(0,0,0,0.28)';
+    ctx.shadowBlur = 28;
+    ctx.shadowOffsetY = 12;
+  }
+
+  function drawShapeFill(ctx, shape, x, y, w, h, color){
+    ctx.save();
+    ctx.fillStyle = color;
+    shapePath(ctx, shape, x, y, w, h);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function clipShape(ctx, shape, x, y, w, h){
+    ctx.save();
+    shapePath(ctx, shape, x, y, w, h);
+    ctx.clip();
+  }
+
+  function shapePath(ctx, shape, x, y, w, h){
+    ctx.beginPath();
+    if (shape === 'circle'){
+      const r = Math.min(w,h)/2;
+      ctx.arc(x + w/2, y + h/2, r, 0, Math.PI*2);
+    } else if (shape === 'blob'){
+      blobPath(ctx, x, y, w, h);
+    } else if (shape === 'square'){
+      roundRect(ctx, x, y, w, h, 18);
+    } else {
+      roundRect(ctx, x, y, w, h, 28);
+    }
+  }
+
+  function blobPath(ctx, x, y, w, h){
+    const cx = x + w/2, cy = y + h/2;
+    ctx.moveTo(cx, y + h*0.08);
+    ctx.bezierCurveTo(x + w*0.86, y - h*0.02, x + w*1.02, y + h*0.30, x + w*0.90, y + h*0.52);
+    ctx.bezierCurveTo(x + w*0.98, y + h*0.82, x + w*0.72, y + h*1.02, x + w*0.48, y + h*0.92);
+    ctx.bezierCurveTo(x + w*0.18, y + h*1.02, x - w*0.02, y + h*0.76, x + w*0.06, y + h*0.50);
+    ctx.bezierCurveTo(x - w*0.04, y + h*0.26, x + w*0.18, y + h*0.02, cx, y + h*0.08);
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function clipRoundRect(ctx, x, y, w, h, r){
+    ctx.save();
+    roundRect(ctx, x, y, w, h, r);
+    ctx.clip();
+  }
+
+  function coverRect(img, x, y, w, h){
+    const ir = img.width / img.height;
+    const tr = w / h;
+    let dw, dh, dx, dy;
+    if (ir > tr){
+      dh = h;
+      dw = h * ir;
+      dx = x - (dw - w)/2;
+      dy = y;
+    } else {
+      dw = w;
+      dh = w / ir;
+      dx = x;
+      dy = y - (dh - h)/2;
+    }
+    return [img, dx, dy, dw, dh];
+  }
+
+  function drawCoverImage(ctx, img, x, y, w, h, scale=1, alpha=1){
+    const ir = img.width / img.height;
+    const tr = w / h;
+    let dw, dh, dx, dy;
+    if (ir > tr){
+      dh = h * scale;
+      dw = dh * ir;
+      dx = x - (dw - w)/2;
+      dy = y - (dh - h)/2;
+    } else {
+      dw = w * scale;
+      dh = dw / ir;
+      dx = x - (dw - w)/2;
+      dy = y - (dh - h)/2;
+    }
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  }
+
+  function loadImage(url){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  function drawCaption(ctx, text, cls, w, h){
+    ctx.save();
+    if (cls === 'caption-pill'){
+      const x = 48, y = h - 180, ww = w - 96, hh = 112;
+      ctx.fillStyle = 'rgba(0,0,0,0.42)';
+      roundRect(ctx, x, y, ww, hh, 36);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, x, y, ww, hh, 36);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '500 40px "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+      drawWrappedText(ctx, text, x + 34, y + 48, ww - 68, 50, 2);
+    } else if (cls === 'caption-floating'){
+      const x = 42, y = h - 200, ww = Math.min(620, w * 0.68), hh = 108;
+      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      roundRect(ctx, x, y, ww, hh, 30);
+      ctx.fill();
+      ctx.fillStyle = '#171b24';
+      ctx.font = '500 36px "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+      drawWrappedText(ctx, text, x + 28, y + 44, ww - 56, 46, 2);
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 40px "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.48)';
+      ctx.shadowBlur = 14;
+      ctx.fillText(text, 42, 70);
+    }
+    ctx.restore();
+  }
+
+  function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, maxLines){
+    const words = text.split(' ');
+    let line = '';
+    const lines = [];
+    for (let n = 0; n < words.length; n++){
+      const testLine = line ? line + ' ' + words[n] : words[n];
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0){
+        lines.push(line);
+        line = words[n];
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) lines.push(line);
+
+    const finalLines = [];
+    for (let i = 0; i < lines.length; i++){
+      if (i < maxLines) finalLines.push(lines[i]);
+    }
+    if (lines.length > maxLines){
+      finalLines[maxLines - 1] = finalLines[maxLines - 1].replace(/[.。!！?？]?$/, '…');
+    }
+    finalLines.forEach((ln, i) => ctx.fillText(ln, x, y + i * lineHeight));
+  }
+})();
+</script>
+</body>
+</html>
