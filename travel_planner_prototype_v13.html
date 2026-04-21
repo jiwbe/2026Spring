@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel Workspace v13</title>
+  <link href="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css)" rel="stylesheet" />
+  <link rel="stylesheet" href="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css)" />
+  <link rel="stylesheet" href="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/@algolia/autocomplete-theme-classic)" />
+  <script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/@algolia/autocomplete-js)"></script>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --border: #2a2a2a;
+      --accent: #3b82f6;
+      --text: #e5e5e5;
+      --muted: #888;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); }
+    .sidebar { width: 260px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar { height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 16px; background: var(--card); }
+    .workspace { flex: 1; overflow-y: auto; padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.15s; border: none; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-ghost:hover { background: var(--border); }
+    input, textarea, select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; width: 100%; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    .trip-list { flex: 1; overflow-y: auto; padding: 12px; }
+    .trip-item { padding: 12px; border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; border: 1px solid transparent; }
+    .trip-item:hover { background: var(--border); }
+    .trip-item.active { background: var(--accent); border-color: var(--accent); }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--border); }
+    .place-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; margin: 4px; }
+    .place-chip .remove { cursor: pointer; opacity: 0.5; }
+    .place-chip .remove:hover { opacity: 1; }
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+    .timeline-item { position: relative; padding-bottom: 24px; }
+    .timeline-item::before { content: ''; position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+    .timeline-item.rest::before { background: var(--muted); }
+    .checklist-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg); border-radius: 8px; margin-bottom: 8px; }
+    .checklist-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+    .checklist-item.done span { text-decoration: line-through; opacity: 0.5; }
+    .stat-card { text-align: center; padding: 16px; background: var(--bg); border-radius: 8px; }
+    .stat-card .value { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .step-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .step-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; background: var(--bg); border: 1px solid var(--border); transition: all 0.15s; }
+    .step-tab:hover { border-color: var(--accent); }
+    .step-tab.active { background: var(--accent); border-color: var(--accent); }
+    .collapsible-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .collapsible-content.open { max-height: 2000px; }
+    .segment-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .aa-Autocomplete { width: 100%; }
+    .aa-Form { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+    .aa-Input { background: transparent; color: var(--text); }
+    .aa-Panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
+    .aa-Item { padding: 10px 12px; cursor: pointer; color: var(--text); }
+    .aa-Item:hover, .aa-Item[aria-selected="true"] { background: var(--border); }
+    .aa-ItemContentTitle { color: var(--text); }
+    .aa-ItemContentSubtitle { color: var(--muted); font-size: 12px; }
+    #screenshot-result { max-height: 400px; overflow-y: auto; }
+    #content-result { max-height: 600px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-size: 14px; line-height: 1.7; }
+    .quick-notes textarea { min-height: 150px; resize: vertical; }
+  </style>
+</head>
+<body class="flex">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div style="padding: 20px; border-bottom: 1px solid var(--border);">
+      <h1 style="font-size: 18px; font-weight: 700;">Travel Workspace v13</h1>
+      <p style="font-size: 12px; color: var(--muted); margin-top: 4px;">저장 위치: 이 브라우저 localStorage</p>
+    </div>
+    <div class="trip-list" id="tripList"></div>
+    <div style="padding: 12px; border-top: 1px solid var(--border);">
+      <button class="btn btn-primary w-full" onclick="createTrip()">
+        <i class="ti ti-plus"></i> 새 여행 만들기
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="step-tabs">
+        <div class="step-tab active" data-step="1" onclick="setStep(1)">STEP 1. 일정 & 장소 추출</div>
+        <div class="step-tab" data-step="2" onclick="setStep(2)">STEP 2. 인스타 가이드</div>
+        <div class="step-tab" data-step="3" onclick="setStep(3)">STEP 3. 여행 회화</div>
+        <div class="step-tab" data-step="4" onclick="setStep(4)">STEP 4. 체크리스트 / 예산</div>
+      </div>
+    </div>
+
+    <div class="workspace" id="workspace">
+      <!-- Left Column -->
+      <div class="flex flex-col gap-6">
+        <!-- Trip Header -->
+        <div class="card" id="tripHeader">
+          <h1 id="currentTripName" style="font-size: 24px; font-weight: 700;">선택된 여행 없음</h1>
+          <p id="currentTripDates" style="color: var(--muted); margin-top: 4px;">왼쪽에서 여행을 선택해줘.</p>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px;">
+            <div class="stat-card"><div class="value" id="statPlaces">0</div><div class="label">장소 수</div></div>
+            <div class="stat-card"><div class="value" id="statChecklist">0</div><div class="label">체크리스트</div></div>
+            <div class="stat-card"><div class="value" id="statBudget">0</div><div class="label">총 예산</div></div>
+            <div class="stat-card"><div class="value" id="statSpent">0</div><div class="label">총 지출</div></div>
+          </div>
+        </div>
+
+        <!-- STEP 1: 기본 정보 입력 -->
+        <div class="card step-content" data-step="1">
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <h3><i class="ti ti-compass"></i> 여행 기본 정보</h3>
+            <i class="ti ti-chevron-down"></i>
+          </div>
+          <div class="collapsible-content open" style="margin-top: 16px;">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">기본 여행 정보의 대표 나라/도시를 검색해서 입력합니다.</p>
+            <div style="display: grid; gap: 12px;">
+              <div>
+                <label style="font-size: 12px; color: var(--muted);">여행 이름</label>
+                <input type="text" id="tripName" placeholder="예: 2025 도쿄 벚꽃 여행" />
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="font-size: 12px; color: var(--muted);">출발일</label>
+                  <input type="date" id="tripStart" />
+                </div>
+                <div>
+                  <label style="font-size: 12px; color: var(--muted);">도착일</label>
+                  <input type="date" id="tripEnd" />
+                </div>
+              </div>
+              <div>
+                <label style="font-size: 12px; color: var(--muted);">대표 나라/도시 (검색)</label>
+                <div id="mainDestinationAutocomplete"></div>
+              </div>
+              <button class="btn btn-primary" onclick="saveBasicInfo()">저장</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 여행 구간 관리 -->
+        <div class="card step-content" data-step="1">
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <h3><i class="ti ti-route"></i> 여행 구간 / 숙소</h3>
+            <i class="ti ti-chevron-down"></i>
+          </div>
+          <div class="collapsible-content open" style="margin-top: 16px;">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">여행 중 나라·도시·숙소가 바뀌는 경우를 따로 기록합니다.</p>
+            <div id="segmentList"></div>
+            <button class="btn btn-ghost" onclick="addSegment()" style="margin-top: 12px;">
+              <i class="ti ti-plus"></i> 구간 추가
+            </button>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card">
+          <h3><i class="ti ti-calendar-event"></i> Trip Timeline</h3>
+          <div id="timeline" class="timeline">
+            <p style="color: var(--muted); font-size: 13px;">날짜를 설정하면 일정표가 여기에 나타납니다.</p>
+          </div>
+        </div>
+
+        <!-- Screenshot Import (STEP 1) -->
+        <div class="card step-content" data-step="1">
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <h3><i class="ti ti-camera"></i> Screenshot Import</h3>
+            <i class="ti ti-chevron-down"></i>
+          </div>
+          <div class="collapsible-content open" style="margin-top: 16px;">
+            <input type="file" id="screenshotInput" accept="image/*" multiple style="margin-bottom: 12px;" />
+            <button class="btn btn-primary" onclick="analyzeScreenshots()">GPT로 장소 추출</button>
+            <div id="screenshot-result" style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 8px;">
+              <p style="color: var(--muted); font-size: 13px;">아직 실행 전</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklist (STEP 4) -->
+        <div class="card step-content" data-step="4">
+          <h3><i class="ti ti-checkbox"></i> Checklist</h3>
+          <div id="checklistContainer"></div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <input type="text" id="newChecklistItem" placeholder="새 항목 추가..." />
+            <button class="btn btn-primary" onclick="addChecklistItem()">추가</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="flex flex-col gap-6">
+        <!-- Content Result -->
+        <div class="card">
+          <h3><i class="ti ti-sparkles"></i> Content Result</h3>
+          <div id="content-result" style="padding: 12px; background: var(--bg); border-radius: 8px; min-height: 200px;">
+            <p style="color: var(--muted); font-size: 13px;">회화 생성이나 인스타 가이드를 실행하면 결과가 여기에 길게 쌓여서 보여.</p>
+          </div>
+        </div>
+
+        <!-- Quick Notes -->
+        <div class="card quick-notes">
+          <h3><i class="ti ti-notes"></i> Quick Notes</h3>
+          <textarea id="quickNotes" placeholder="여행 관련 메모를 자유롭게 작성하세요..."></textarea>
+          <button class="btn btn-ghost" style="margin-top: 12px;" onclick="saveNotes()">메모 저장</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ===== State =====
+    let trips = JSON.parse(localStorage.getItem('trips') || '[]');
+    let currentTripId = null;
+    let currentStep = 1;
+    let mainDestinationAC = null;
+
+    // ===== Init =====
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTripList();
+      initAutocomplete();
+      if (trips.length > 0) {
+        selectTrip(trips[0].id);
+      }
+    });
+
+    // ===== Autocomplete =====
+    function initAutocomplete() {
+      if (mainDestinationAC) mainDestinationAC.destroy();
+      mainDestinationAC = autocomplete({
+        container: '#mainDestinationAutocomplete',
+        placeholder: '도시 또는 나라 검색...',
+        getSources({ query }) {
+          return [{
+            sourceId: 'cities',
+            async getItems() {
+              if (!query) return [];
+              const res = await fetch(`[secure.geonames.org](https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&maxRows=5&username=demo&style=MEDIUM)`);
+              const data = await res.json();
+              return (data.geonames || []).map(g => ({
+                label: `${g.name}, ${g.countryName}`,
+                lat: g.lat,
+                lng: g.lng,
+                country: g.countryName
+              }));
+            },
+            templates: {
+              item({ item }) {
+                return `<div>${item.label}</div>`;
+              }
+            },
+            onSelect({ item }) {
+              const trip = getTrip();
+              if (trip) {
+                trip.mainDestination = item.label; // ★ 수정: item.name → item.label
+                trip.mainCountry = item.country;
+                saveTrips();
+              }
+            }
+          }];
+        }
+      });
+    }
+
+    // ===== Trip Management =====
+    function createTrip() {
+      const id = Date.now().toString();
+      const trip = {
+        id,
+        name: '새 여행',
+        startDate: '',
+        endDate: '',
+        mainDestination: '',
+        mainCountry: '',
+        segments: [],
+        places: [],
+        checklist: [],
+        budget: 0,
+        spent: 0,
+        notes: '',
+        conversationHistory: []
+      };
+      trips.push(trip);
+      saveTrips();
+      renderTripList();
+      selectTrip(id);
+    }
+
+    function selectTrip(id) {
+      currentTripId = id;
+      renderTripList();
+      loadTripData();
+    }
+
+    function getTrip() {
+      return trips.find(t => t.id === currentTripId);
+    }
+
+    function saveTrips() {
+      localStorage.setItem('trips', JSON.stringify(trips));
+    }
+
+    function renderTripList() {
+      const container = document.getElementById('tripList');
+      container.innerHTML = trips.map(t => `
+        <div class="trip-item ${t.id === currentTripId ? 'active' : ''}" onclick="selectTrip('${t.id}')">
+          <div style="font-weight: 600;">${t.name}</div>
+          <div style="font-size: 12px; color: var(--muted);">${t.mainDestination || '목적지 미정'}</div>
+          ${t.startDate ? `<div style="font-size: 11px; color: var(--muted); margin-top: 4px;">${t.startDate} ~ ${t.endDate}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function loadTripData() {
+      const trip = getTrip();
+      if (!trip) return;
+
+      document.getElementById('currentTripName').textContent = trip.name;
+      document.getElementById('currentTripDates').textContent = 
+        trip.startDate ? `${trip.startDate} ~ ${trip.endDate}` : '날짜 미정';
+
+      document.getElementById('tripName').value = trip.name;
+      document.getElementById('tripStart').value = trip.startDate;
+      document.getElementById('tripEnd').value = trip.endDate;
+      document.getElementById('quickNotes').value = trip.notes || '';
+
+      updateStats();
+      renderSegments();
+      renderTimeline();
+      renderChecklist();
+    }
+
+    function saveBasicInfo() {
+      const trip = getTrip();
+      if (!trip) return;
+
+      trip.name = document.getElementById('tripName').value;
+      trip.startDate = document.getElementById('tripStart').value;
+      trip.endDate = document.getElementById('tripEnd').value;
+
+      saveTrips();
+      renderTripList();
+      loadTripData();
+    }
+
+    function saveNotes() {
+      const trip = getTrip();
+      if (!trip) return;
+      trip.notes = document.getElementById('quickNotes').value;
+      saveTrips();
+    }
+
+    // ===== Segments (구간 관리) =====
+    // ★ 추가: addSegment 함수 정의
+    function addSegment() {
+      const trip = getTrip();
+      if (!trip) {
+        alert('먼저 여행을 선택해주세요.');
+        return;
+      }
+
+      // segments 배열이 없으면 초기화
+      if (!trip.segments) {
+        trip.segments = [];
+      }
+
+      const newSegment = {
+        id: Date.now().toString(),
+        city: '',
+        country: '',
+        accommodation: '',
+        checkIn: '',
+        checkOut: '',
+        places: []
+      };
+
+      trip.segments.push(newSegment);
+      saveTrips();
+      renderSegments();
+    }
+
+    function renderSegments() {
+      const trip = getTrip();
+      const container = document.getElementById('segmentList');
+      
+      if (!trip || !trip.segments || trip.segments.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); font-size: 13px;">아직 구간이 없습니다. 구간 추가 버튼을 눌러 추가하세요.</p>';
+        return;
+      }
+
+      container.innerHTML = trip.segments.map((seg, idx) => `
+        <div class="segment-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <strong>구간 ${idx + 1}</strong>
+            <button class="btn btn-ghost" style="padding: 4px 8px; font-size: 12px;" onclick="removeSegment('${seg.id}')">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+          <div style="display: grid; gap: 8px;">
+            <input type="text" placeholder="도시" value="${seg.city || ''}" onchange="updateSegment('${seg.id}', 'city', this.value)" />
+            <input type="text" placeholder="나라" value="${seg.country || ''}" onchange="updateSegment('${seg.id}', 'country', this.value)" />
+            <input type="text" placeholder="숙소 이름/주소" value="${seg.accommodation || ''}" onchange="updateSegment('${seg.id}', 'accommodation', this.value)" />
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div>
+                <label style="font-size: 11px; color: var(--muted);">체크인</label>
+                <input type="date" value="${seg.checkIn || ''}" onchange="updateSegment('${seg.id}', 'checkIn', this.value)" />
+              </div>
+              <div>
+                <label style="font-size: 11px; color: var(--muted);">체크아웃</label>
+                <input type="date" value="${seg.checkOut || ''}" onchange="updateSegment('${seg.id}', 'checkOut', this.value)" />
+              </div>
+            </div>
+            <div>
+              <label style="font-size: 11px; color: var(--muted);">이 구간의 장소들</label>
+              <div id="segmentPlaces-${seg.id}" style="margin-top: 8px;">
+                ${(seg.places || []).map(p => `
+                  <span class="place-chip">
+                    ${p.name}
+                    <span class="remove" onclick="removePlaceFromSegment('${seg.id}', '${p.id}')">&times;</span>
+                  </span>
+                `).join('')}
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <input type="text" id="newPlace-${seg.id}" placeholder="장소 이름" style="flex: 1;" />
+                <button class="btn btn-ghost" onclick="addPlaceToSegment('${seg.id}')">추가</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateSegment(segId, field, value) {
+      const trip = getTrip();
+      if (!trip) return;
+      const seg = trip.segments.find(s => s.id === segId);
+      if (seg) {
+        seg[field] = value;
+        saveTrips();
+      }
+    }
+
+    function removeSegment(segId) {
+      const trip = getTrip();
+      if (!trip) return;
+      trip.segments = trip.segments.filter(s => s.id !== segId);
+      saveTrips();
+      renderSegments();
+      updateStats();
+    }
+
+    function addPlaceToSegment(segId) {
+      const trip = getTrip();
+      if (!trip) return;
+      const seg = trip.segments.find(s => s.id === segId);
+      if (!seg) return;
+
+      const input = document.getElementById(`newPlace-${segId}`);
+      const name = input.value.trim();
+      if (!name) return;
+
+      if (!seg.places) seg.places = [];
+      seg.places.push({
+        id: Date.now().toString(),
+        name: name
+      });
+
+      input.value = '';
+      saveTrips();
+      renderSegments();
+      updateStats();
+    }
+
+    function removePlaceFromSegment(segId, placeId) {
+      const trip = getTrip();
+      if (!trip) return;
+      const seg = trip.segments.find(s => s.id === segId);
+      if (!seg) return;
+      seg.places = (seg.places || []).filter(p => p.id !== placeId);
+      saveTrips();
+      renderSegments();
+      updateStats();
+    }
+
+    // ===== Places (기존 방식 - 전체 여행에 장소 추가) =====
+    // ★ 수정: place.name → place.label
+    function addPlace(place) {
+      const trip = getTrip();
+      if (!trip) return;
+      if (!trip.places) trip.places = [];
+      
+      // place 객체가 문자열일 경우 처리
+      const placeName = typeof place === 'string' ? place : (place.label || place.name || '');
+      
+      if (!placeName) return;
+      
+      trip.places.push({
+        id: Date.now().toString(),
+        name: placeName,
+        lat: place.lat || null,
+        lng: place.lng || null,
+        date: '',
+        notes: ''
+      });
+      saveTrips();
+      updateStats();
+      renderTimeline();
+    }
+
+    // ===== Timeline =====
+    function renderTimeline() {
+      const trip = getTrip();
+      const container = document.getElementById('timeline');
+
+      if (!trip || !trip.startDate || !trip.endDate) {
+        container.innerHTML = '<p style="color: var(--muted); font-size: 13px;">날짜를 설정하면 일정표가 여기에 나타납니다.</p>';
+        return;
+      }
+
+      const start = new Date(trip.startDate);
+      const end = new Date(trip.endDate);
+      const days = [];
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const dayPlaces = (trip.places || []).filter(p => p.date === dateStr);
+        
+        // 구간에서도 장소 가져오기
+        const segmentPlaces = [];
+        (trip.segments || []).forEach(seg => {
+          if (seg.checkIn && seg.checkOut) {
+            const segStart = new Date(seg.checkIn);
+            const segEnd = new Date(seg.checkOut);
+            const current = new Date(dateStr);
+            if (current >= segStart && current <= segEnd) {
+              (seg.places || []).forEach(p => segmentPlaces.push({...p, segment: seg.city}));
+            }
+          }
+        });
+
+        days.push({
+          date: new Date(d),
+          dateStr,
+          places: [...dayPlaces, ...segmentPlaces]
+        });
+      }
+
+      container.innerHTML = days.map((day, idx) => `
+        <div class="timeline-item ${day.places.length === 0 ? 'rest' : ''}">
+          <div style="font-weight: 600;">Day ${idx + 1}</div>
+          <div style="font-size: 12px; color: var(--muted);">${day.date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })}</div>
+          ${day.places.length > 0 
+            ? day.places.map(p => `
+                <div style="margin-top: 8px; padding: 8px; background: var(--bg); border-radius: 6px; font-size: 13px;">
+                  ${p.name} ${p.segment ? `<span style="color: var(--muted);">(${p.segment})</span>` : ''}
+                </div>
+              `).join('')
+            : '<div style="margin-top: 8px; font-size: 13px; color: var(--muted);">자유 시간 / 휴식</div>'
+          }
+        </div>
+      `).join('');
+    }
+
+    // ===== Checklist =====
+    function renderChecklist() {
+      const trip = getTrip();
+      const container = document.getElementById('checklistContainer');
+      
+      if (!trip || !trip.checklist || trip.checklist.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); font-size: 13px;">체크리스트가 비어있습니다.</p>';
+        return;
+      }
+
+      container.innerHTML = trip.checklist.map(item => `
+        <div class="checklist-item ${item.done ? 'done' : ''}">
+          <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')" />
+          <span style="flex: 1;">${item.text}</span>
+          <span class="remove" onclick="removeChecklistItem('${item.id}')" style="cursor: pointer; opacity: 0.5;">&times;</span>
+        </div>
+      `).join('');
+    }
+
+    function addChecklistItem() {
+      const trip = getTrip();
+      if (!trip) return;
+      
+      const input = document.getElementById('newChecklistItem');
+      const text = input.value.trim();
+      if (!text) return;
+
+      if (!trip.checklist) trip.checklist = [];
+      trip.checklist.push({
+        id: Date.now().toString(),
+        text,
+        done: false
+      });
+
+      input.value = '';
+      saveTrips();
+      renderChecklist();
+      updateStats();
+    }
+
+    function toggleChecklistItem(id) {
+      const trip = getTrip();
+      if (!trip) return;
+      const item = trip.checklist.find(i => i.id === id);
+      if (item) {
+        item.done = !item.done;
+        saveTrips();
+        renderChecklist();
+        updateStats();
+      }
+    }
+
+    function removeChecklistItem(id) {
+      const trip = getTrip();
+      if (!trip) return;
+      trip.checklist = trip.checklist.filter(i => i.id !== id);
+      saveTrips();
+      renderChecklist();
+      updateStats();
+    }
+
+    // ===== Stats =====
+    function updateStats() {
+      const trip = getTrip();
+      if (!trip) return;
+
+      // 전체 장소 수 계산 (기본 places + 각 segment의 places)
+      let totalPlaces = (trip.places || []).length;
+      (trip.segments || []).forEach(seg => {
+        totalPlaces += (seg.places || []).length;
+      });
+
+      const checkedItems = (trip.checklist || []).filter(i => i.done).length;
+      const totalItems = (trip.checklist || []).length;
+
+      document.getElementById('statPlaces').textContent = totalPlaces;
+      document.getElementById('statChecklist').textContent = totalItems > 0 ? `${checkedItems}/${totalItems}` : '0';
+      document.getElementById('statBudget').textContent = trip.budget ? `₩${trip.budget.toLocaleString()}` : '0';
+      document.getElementById('statSpent').textContent = trip.spent ? `₩${trip.spent.toLocaleString()}` : '0';
+    }
+
+    // ===== Step Navigation =====
+    function setStep(step) {
+      currentStep = step;
+      document.querySelectorAll('.step-tab').forEach(tab => {
+        tab.classList.toggle('active', parseInt(tab.dataset.step) === step);
+      });
+      // 모든 step-content는 항상 보이게 유지 (필요시 숨김 처리 추가 가능)
+    }
+
+    // ===== Collapsible =====
+    function toggleCollapsible(header) {
+      const content = header.nextElementSibling;
+      const icon = header.querySelector('.ti-chevron-down, .ti-chevron-up');
+      content.classList.toggle('open');
+      if (icon) {
+        icon.classList.toggle('ti-chevron-down');
+        icon.classList.toggle('ti-chevron-up');
+      }
+    }
+
+    // ===== Screenshot Analysis (Placeholder) =====
+    async function analyzeScreenshots() {
+      const input = document.getElementById('screenshotInput');
+      const resultDiv = document.getElementById('screenshot-result');
+      
+      if (!input.files || input.files.length === 0) {
+        resultDiv.innerHTML = '<p style="color: #ef4444;">이미지를 선택해주세요.</p>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<p style="color: var(--accent);">분석 중... (API 연동 필요)</p>';
+      
+      // TODO: 실제 GPT Vision API 연동
+      // 현재는 플레이스홀더
+      setTimeout(() => {
+        resultDiv.innerHTML = `
+          <p style="color: var(--muted);">이 기능은 OpenAI API 키 설정이 필요합니다.</p>
+          <p style="color: var(--muted); font-size: 12px; margin-top: 8px;">스크린샷에서 장소를 자동 추출하려면 GPT-4 Vision API를 연동하세요.</p>
+        `;
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
